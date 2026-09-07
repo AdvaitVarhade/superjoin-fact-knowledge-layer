@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superjoin | Fact Knowledge Layer & Cross-Document Reconciliation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            app: {
+              bg: '#020408',
+              sidebar: '#04070D',
+              card: '#080E1A',
+              surface: '#0D1627',
+              border: '#111D30',
+              borderLight: '#1A2C4A',
+              teal: '#00D4B2',
+              tealGlow: '#00F0C8',
+              emerald: '#10B981',
+              amber: '#F59E0B',
+              coral: '#EF4444',
+              purple: '#8B5CF6',
+              orange: '#F97316',
+              blue: '#3B82F6',
+              text: '#F8FAFC',
+              muted: '#94A3B8',
+              dim: '#64748B'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #020408;
+      color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #020408;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #111D30;
+      border-radius: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #1A2C4A;
+    }
+    .app-card {
+      background: #080E1A;
+      border: 1px solid #111D30;
+    }
+    .app-card:hover {
+      border-color: #1A2C4A;
+    }
+    .active-nav-pill {
+      background: rgba(0, 212, 178, 0.12);
+      border-color: rgba(0, 212, 178, 0.35);
+      color: #00D4B2 !important;
+    }
+    .active-workspace-pill {
+      background: #0D1627;
+      border-color: #1A2C4A;
+      color: #FFFFFF !important;
+    }
+    .graph-tooltip {
+      position: absolute;
+      pointer-events: none;
+      transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+      z-index: 50;
+    }
+    .graph-node-highlight {
+      stroke: #00F0C8 !important;
+      stroke-width: 3.5px !important;
+      filter: drop-shadow(0 0 10px rgba(0, 240, 200, 0.85)) !important;
+    }
+    .graph-node-dimmed {
+      opacity: 0.15 !important;
+    }
+    .graph-link-dimmed {
+      opacity: 0.05 !important;
+    }
+    .graph-link-highlight {
+      stroke-opacity: 1.0 !important;
+      stroke-width: 3.5px !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex bg-app-bg text-app-text antialiased overflow-x-hidden">
+
+  <!-- ========================================== -->
+  <!-- 1. LEFT FIXED SIDEBAR NAVIGATION (w-64)    -->
+  <!-- ========================================== -->
+  <aside class="w-64 flex-shrink-0 bg-app-sidebar border-r border-app-border flex flex-col justify-between h-screen sticky top-0 z-40">
+    <div>
+      <!-- Brand Logo & Header -->
+      <div class="p-5 border-b border-app-border flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-app-teal flex items-center justify-center font-mono font-black text-slate-950 shadow-[0_0_18px_rgba(0,212,178,0.45)] text-sm tracking-tighter">
+          SJ
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <span class="font-extrabold text-sm tracking-wide text-white">SUPERJOIN</span>
+            <span class="text-[9px] px-1.5 py-0.5 rounded font-mono bg-app-teal/15 text-app-teal border border-app-teal/30 font-bold">v2.4</span>
+          </div>
+          <p class="text-[11px] text-app-muted">Fact Knowledge Layer</p>
+        </div>
+      </div>
+
+      <!-- Main Navigation Menu -->
+      <div class="px-3 py-4 space-y-1">
+        <div class="px-3 py-1.5 text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">
+          Platform Views
+        </div>
+        
+        <button onclick="switchTab('dashboard')" id="nav-btn-dashboard" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium border border-transparent transition active-nav-pill cursor-pointer">
+          <svg class="w-4 h-4 text-app-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button onclick="switchTab('documents')" id="nav-btn-documents" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <span>Documents</span>
+        </button>
+
+        <button onclick="switchTab('facts')" id="nav-btn-facts" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+          <span>Fact Explorer</span>
+        </button>
+
+        <button onclick="switchTab('graph')" id="nav-btn-graph" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+          <span>Knowledge Graph</span>
+        </button>
+
+        <button onclick="switchTab('cases')" id="nav-btn-cases" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          <span>Reconciliation</span>
+        </button>
+
+        <button onclick="switchTab('query')" id="nav-btn-query" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span>Audit Workbench</span>
+        </button>
+
+        <button onclick="switchTab('upload')" id="nav-btn-upload" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span>Upload PDF</span>
+        </button>
+      </div>
+
+      <!-- WORKSPACES Section -->
+      <div class="px-3 pt-2 space-y-1">
+        <div class="px-3 py-1.5 text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">
+          Workspaces
+        </div>
+
+        <button onclick="filterWorkspace('delhivery')" id="ws-btn-delhivery" class="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-white bg-app-surface/80 border border-app-border font-medium transition cursor-pointer active-workspace-pill">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded bg-red-500"></span>
+            <span>Delhivery</span>
+          </div>
+          <span class="text-[10px] font-mono text-app-dim">283 facts</span>
+        </button>
+
+        <button onclick="filterWorkspace('apple')" id="ws-btn-apple" class="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded bg-purple-500"></span>
+            <span>Apple Inc. (10-K)</span>
+          </div>
+          <span class="text-[10px] font-mono text-app-dim">208 facts</span>
+        </button>
+
+        <button onclick="filterWorkspace('tesla')" id="ws-btn-tesla" class="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded bg-orange-500"></span>
+            <span>Tesla Inc.</span>
+          </div>
+          <span class="text-[10px] font-mono text-app-dim">194 facts</span>
+        </button>
+
+        <button onclick="filterWorkspace('india_macro')" id="ws-btn-india_macro" class="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded bg-app-teal"></span>
+            <span>India Macro</span>
+          </div>
+          <span class="text-[10px] font-mono text-app-dim">59 facts</span>
+        </button>
+
+        <button onclick="switchTab('upload')" class="w-full flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs text-app-dim hover:text-app-teal transition border border-dashed border-app-border mt-1 cursor-pointer">
+          <span>+</span>
+          <span>New Workspace</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sidebar Bottom Status Widget -->
+    <div class="p-4 border-t border-app-border bg-app-card/40 space-y-2">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2 text-xs font-mono text-emerald-400">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-bold">System Online</span>
+        </div>
+        <button onclick="loadAllData()" id="btn-sync-graph" class="text-[10px] font-mono text-app-teal hover:underline cursor-pointer">
+          Sync
+        </button>
+      </div>
+      <div class="text-[11px] font-mono text-app-muted flex items-center justify-between">
+        <span>Docs: <b id="sidebar-docs" class="text-white">9</b></span>
+        <span>Facts: <b id="sidebar-facts" class="text-app-teal">744</b></span>
+      </div>
+      <div class="text-[10px] text-app-dim font-mono">
+        Last Sync: Just now
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN APP CONTENT CONTAINER              -->
+  <!-- ========================================== -->
+  <div class="flex-1 flex flex-col min-w-0 bg-app-bg">
+
+    <!-- TOP NAVBAR HEADER (h-16) -->
+    <header class="h-16 border-b border-app-border bg-app-sidebar/90 backdrop-blur sticky top-0 z-30 px-6 flex items-center justify-between">
+      <!-- Search Input -->
+      <div class="relative w-96 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-app-dim">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <input type="text" id="top-search-input" onkeyup="handleTopSearch(event)" placeholder="Search facts, companies, metrics, or documents..." class="w-full pl-9 pr-12 py-2 bg-app-card border border-app-border rounded-lg text-xs text-app-text placeholder-app-dim focus:outline-none focus:border-app-teal transition">
+        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+          <kbd class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-app-surface text-app-dim border border-app-border">⌘ K</kbd>
+        </div>
+      </div>
+
+      <!-- Right Header Actions & Profile -->
+      <div class="flex items-center space-x-3">
+        <!-- AI Fact Copilot Header Action -->
+        <button id="btn-top-copilot" onclick="toggleCopilotDrawer()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-app-teal/15 to-teal-500/15 hover:from-app-teal/25 hover:to-teal-500/25 border border-app-teal/30 text-app-teal text-xs font-mono font-bold transition cursor-pointer shadow-sm">
+          <span>✨</span>
+          <span>AI Copilot</span>
+          <kbd class="text-[9px] px-1 py-0.2 rounded bg-app-bg text-app-teal/80 border border-app-teal/20">⌘ J</kbd>
+        </button>
+
+        <!-- Notification Bell -->
+        <button id="btn-top-notif" onclick="alert('System Notifications: 0 unread alerts. Knowledge graph synced.')" class="relative p-2 rounded-lg text-app-muted hover:text-white hover:bg-app-card transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-app-teal"></span>
+        </button>
+
+        <!-- Settings Gear -->
+        <button id="btn-top-settings" onclick="alert('Superjoin Fact Engine Settings v2.4\nExtraction Engine: PyMuPDF + PaddleOCR Layout Analysis\nNormalization: Deterministic Unit & Hierarchy Scale Parser')" class="p-2 rounded-lg text-app-muted hover:text-white hover:bg-app-card transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        </button>
+
+        <!-- Profile Avatar Pill -->
+        <div class="flex items-center space-x-2.5 pl-2 border-l border-app-border">
+          <div class="w-7 h-7 rounded-full bg-app-teal text-slate-950 font-bold flex items-center justify-center text-xs">
+            S
+          </div>
+          <div class="hidden sm:block">
+            <div class="text-xs font-semibold text-white leading-tight">Superjoin Builder</div>
+            <div class="text-[10px] text-app-dim leading-tight">Admin Workspace</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN SCROLLABLE CONTENT BODY -->
+    <main class="flex-1 p-6 space-y-6 overflow-y-auto custom-scroll max-w-7xl w-full mx-auto">
+
+      <!-- ========================================== -->
+      <!-- VIEW 1: DASHBOARD (SCREENSHOT FIDELITY)    -->
+      <!-- ========================================== -->
+      <div id="view-dashboard" class="space-y-6">
+        
+        <!-- Dashboard Top Header Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">Dashboard</h1>
+            <p class="text-xs text-app-muted mt-0.5">Your multi-document financial intelligence at a glance</p>
+          </div>
+          
+          <div class="flex items-center space-x-3">
+            <!-- Period Selector -->
+            <button id="btn-period-select" onclick="cyclePeriod()" class="px-3 py-2 rounded-lg bg-app-card border border-app-border text-xs text-app-text hover:border-app-borderLight font-medium flex items-center space-x-2 transition cursor-pointer">
+              <span>📅</span>
+              <span id="label-active-period">FY21 - FY24</span>
+              <svg class="w-3 h-3 text-app-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <!-- Upload Documents CTA -->
+            <button onclick="switchTab('upload')" id="btn-dash-upload" class="px-4 py-2 rounded-lg bg-gradient-to-r from-app-teal to-teal-500 hover:from-teal-400 hover:to-app-teal text-slate-950 font-bold text-xs shadow-lg shadow-app-teal/20 flex items-center space-x-1.5 transition cursor-pointer">
+              <span>+</span>
+              <span>Upload Documents</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 KPI METRIC CARDS ROW -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <!-- Card 1 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('documents')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">INDEXED DOCUMENTS</div>
+            <div id="stat-docs" class="text-2xl font-bold font-mono text-white mt-1">9</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center space-x-1">
+              <span>↑</span> <span>+3 this week</span>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('facts')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">VERIFIED FACTS</div>
+            <div id="stat-facts" class="text-2xl font-bold font-mono text-app-teal mt-1">744</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center space-x-1">
+              <span>↑</span> <span>+12%</span>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('graph')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">CROSS-DOC LINKS</div>
+            <div id="stat-rel" class="text-2xl font-bold font-mono text-cyan-400 mt-1">4</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center space-x-1">
+              <span>↑</span> <span>+1</span>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('cases')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">CORROBORATED</div>
+            <div id="stat-corrob" class="text-2xl font-bold font-mono text-emerald-400 mt-1">1</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center space-x-1">
+              <span>↑</span> <span>+1</span>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('cases')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">CONTRADICTIONS</div>
+            <div id="stat-contra" class="text-2xl font-bold font-mono text-amber-400 mt-1">1</div>
+            <div class="text-[11px] text-amber-400 font-mono mt-1 flex items-center space-x-1">
+              <span>→</span> <span>0%</span>
+            </div>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="app-card rounded-xl p-3.5 cursor-pointer hover:border-app-teal/40 transition" onclick="switchTab('cases')">
+            <div class="text-[10px] font-mono tracking-wider text-app-dim uppercase font-semibold">RECONCILED / EDGE</div>
+            <div id="stat-reconciled" class="text-2xl font-bold font-mono text-app-teal mt-1">2</div>
+            <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center space-x-1">
+              <span>↑</span> <span>+1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MIDDLE ROW: 2 CHARTS (8 cols + 4 cols) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          
+          <!-- Left Main Chart (8 cols): Multi-Year Expansion -->
+          <div class="lg:col-span-8 app-card rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 id="chart1-title" class="text-sm font-bold text-white tracking-tight flex items-center space-x-2">
+                  <span>Delhivery Multi-Year Financial & Operational Expansion</span>
+                </h3>
+                <p id="chart1-sub" class="text-xs text-app-muted mt-0.5">Revenue, EBITDA & Express Parcel Volume (FY21-FY24)</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-app-surface text-app-teal border border-app-teal/30">FY21 - FY24</span>
+              </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="h-64 w-full relative">
+              <canvas id="revenueTrendChart"></canvas>
+            </div>
+
+            <!-- Metadata Footer -->
+            <div id="chart1-footer" class="pt-3 border-t border-app-border text-[11px] font-mono text-app-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
+              <span>Source: Delhivery Annual Reports FY21-FY24 (Pages 34, 48, 112)</span>
+              <span class="text-app-teal font-semibold">✓ Verified by 3 Core Auditors</span>
+            </div>
+          </div>
+
+          <!-- Right Donut Chart (4 cols): Portfolio Fact Distribution -->
+          <div class="lg:col-span-4 app-card rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div>
+              <h3 id="chart2-title" class="text-sm font-bold text-white tracking-tight">Portfolio Fact Distribution</h3>
+              <p id="chart2-sub" class="text-xs text-app-muted mt-0.5">744 verified facts across 4 entities</p>
+            </div>
+
+            <div class="h-48 w-full relative flex items-center justify-center">
+              <canvas id="reconDonutChart"></canvas>
+            </div>
+
+            <!-- Entity Slices Legend -->
+            <div class="space-y-1.5 pt-2 border-t border-app-border text-xs font-mono">
+              <button onclick="filterWorkspace('delhivery')" class="w-full flex items-center justify-between hover:bg-app-surface/50 p-1 rounded transition text-left cursor-pointer">
+                <span class="flex items-center space-x-2 text-app-muted"><span class="w-2 h-2 rounded-full bg-app-teal"></span><span>Delhivery</span></span>
+                <span class="font-bold text-white">283 facts (38%)</span>
+              </button>
+              <button onclick="filterWorkspace('apple')" class="w-full flex items-center justify-between hover:bg-app-surface/50 p-1 rounded transition text-left cursor-pointer">
+                <span class="flex items-center space-x-2 text-app-muted"><span class="w-2 h-2 rounded-full bg-purple-500"></span><span>Apple Inc.</span></span>
+                <span class="font-bold text-white">208 facts (28%)</span>
+              </button>
+              <button onclick="filterWorkspace('tesla')" class="w-full flex items-center justify-between hover:bg-app-surface/50 p-1 rounded transition text-left cursor-pointer">
+                <span class="flex items-center space-x-2 text-app-muted"><span class="w-2 h-2 rounded-full bg-orange-500"></span><span>Tesla Inc.</span></span>
+                <span class="font-bold text-white">194 facts (26%)</span>
+              </button>
+              <button onclick="filterWorkspace('india_macro')" class="w-full flex items-center justify-between hover:bg-app-surface/50 p-1 rounded transition text-left cursor-pointer">
+                <span class="flex items-center space-x-2 text-app-muted"><span class="w-2 h-2 rounded-full bg-blue-500"></span><span>India Macro</span></span>
+                <span class="font-bold text-white">59 facts (8%)</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM ROW: 3 CARDS (4 cols + 4 cols + 4 cols) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <!-- Bottom Left: Delhivery Segment Breakdown Progress Bars -->
+          <div class="app-card rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div>
+              <h3 class="text-sm font-bold text-white">Delhivery FY24 Business Segment Breakdown</h3>
+              <p class="text-xs text-app-muted mt-0.5">Revenue distribution by vertical (₹8,140 Cr total)</p>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+              <!-- Segment 1 -->
+              <div>
+                <div class="flex justify-between text-app-muted mb-1">
+                  <span>Express Parcel</span>
+                  <span class="text-white font-bold">₹4,280 Cr (52%)</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-app-surface overflow-hidden">
+                  <div class="h-full bg-app-teal rounded-full" style="width: 52%;"></div>
+                </div>
+              </div>
+
+              <!-- Segment 2 -->
+              <div>
+                <div class="flex justify-between text-app-muted mb-1">
+                  <span>PTL Freight</span>
+                  <span class="text-white font-bold">₹2,180 Cr (27%)</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-app-surface overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full" style="width: 27%;"></div>
+                </div>
+              </div>
+
+              <!-- Segment 3 -->
+              <div>
+                <div class="flex justify-between text-app-muted mb-1">
+                  <span>Supply Chain Services</span>
+                  <span class="text-white font-bold">₹1,120 Cr (14%)</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-app-surface overflow-hidden">
+                  <div class="h-full bg-purple-500 rounded-full" style="width: 14%;"></div>
+                </div>
+              </div>
+
+              <!-- Segment 4 -->
+              <div>
+                <div class="flex justify-between text-app-muted mb-1">
+                  <span>Cross-Border</span>
+                  <span class="text-white font-bold">₹560 Cr (7%)</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-app-surface overflow-hidden">
+                  <div class="h-full bg-amber-500 rounded-full" style="width: 7%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-app-border text-[11px] font-mono text-app-dim">
+              99.4% pin-code reach across 18,700+ PIN codes.
+            </div>
+          </div>
+
+          <!-- Bottom Middle: India Macro Estimate Discrepancy Chart -->
+          <div class="app-card rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white">India Macro: Estimate Discrepancy</h3>
+                <p class="text-xs text-app-muted mt-0.5">GDP Growth Forecast Reconciliations (% YoY)</p>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-app-surface text-amber-400 border border-amber-500/30">Discrepancy</span>
+            </div>
+
+            <div class="h-44 w-full relative">
+              <canvas id="macroComparisonChart"></canvas>
+            </div>
+
+            <div class="pt-3 border-t border-app-border text-[11px] font-mono text-app-dim flex justify-between">
+              <span>RBI: 7.2% vs IMF: 6.8%</span>
+              <span class="text-amber-400">0.4% Variance Reconciled</span>
+            </div>
+          </div>
+
+          <!-- Bottom Right: Recent Activity Timeline -->
+          <div class="app-card rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white">Recent Activity</h3>
+                <p class="text-xs text-app-muted mt-0.5">Latest system actions & sync events</p>
+              </div>
+              <button onclick="switchTab('facts')" id="btn-activity-view-all" class="text-xs text-app-teal hover:underline font-mono cursor-pointer">View All</button>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+              <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('facts')">
+                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">✓</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white text-[11px] truncate">Ingested Apple FY23 10-K</div>
+                  <div class="text-[10px] text-app-dim">208 facts extracted • 10m ago</div>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('cases')">
+                <span class="w-5 h-5 rounded-full bg-app-teal/15 text-app-teal border border-app-teal/30 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">⚡</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white text-[11px] truncate">Corroborated GDP FY24 (RBI vs IMF)</div>
+                  <div class="text-[10px] text-app-dim">7.2% vs 7.0% • 45m ago</div>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('cases')">
+                <span class="w-5 h-5 rounded-full bg-amber-950 text-amber-400 border border-amber-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">⚠️</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white text-[11px] truncate">Detected Revenue Contradiction</div>
+                  <div class="text-[10px] text-app-dim">Consol vs Standalone • 2h ago</div>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('facts')">
+                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">✓</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-white text-[11px] truncate">Ingested Tesla FY23 10-K</div>
+                  <div class="text-[10px] text-app-dim">194 facts extracted • 3h ago</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-app-border text-[11px] font-mono text-app-dim">
+              Continuous real-time provenance tracking.
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 2: DOCUMENTS MANAGEMENT               -->
+      <!-- ========================================== -->
+      <div id="view-documents" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-app-border pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white">Indexed Documents</h2>
+            <p class="text-xs text-app-muted mt-1">Multi-entity corporate filings, annual reports, and macroeconomic releases parsed into grounded knowledge.</p>
+          </div>
+          <button onclick="switchTab('upload')" id="btn-docs-upload" class="px-4 py-2 rounded-lg bg-app-teal text-slate-950 font-bold text-xs hover:bg-teal-400 transition cursor-pointer">
+            + Upload New Document
+          </button>
+        </div>
+
+        <div class="app-card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-app-surface text-app-muted border-b border-app-border uppercase text-[10px]">
+                <tr>
+                  <th class="p-3">Document Title / File</th>
+                  <th class="p-3">Entity</th>
+                  <th class="p-3 text-center">Pages</th>
+                  <th class="p-3 text-center">Blocks</th>
+                  <th class="p-3 text-center">Tables</th>
+                  <th class="p-3 text-right">Extracted Facts</th>
+                  <th class="p-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="docsTableBody" class="divide-y divide-app-border/60">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 3: GROUNDED FACT EXPLORER             -->
+      <!-- ========================================== -->
+      <div id="view-facts" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-app-border pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-white">Grounded Fact Explorer</h2>
+            <p class="text-xs text-app-muted mt-1">Search, filter, and inspect canonical verified financial facts with exact bounding box citations.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="exportFactsCSV()" id="btn-export-facts-csv" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer">
+              ⬇️ Export CSV
+            </button>
+            <button onclick="exportFactsJSON()" id="btn-export-facts-json" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer">
+              ⬇️ Export JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="app-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono">
+          <div>
+            <label class="text-app-dim text-[10px] block mb-1">Entity</label>
+            <select id="filter-fact-entity" onchange="filterFactsList()" class="w-full bg-app-surface border border-app-border rounded-lg p-2 text-white">
+              <option value="all">All Entities</option>
+              <option value="delhivery">Delhivery</option>
+              <option value="apple">Apple Inc.</option>
+              <option value="tesla">Tesla Inc.</option>
+              <option value="india_macro">India Macro</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-app-dim text-[10px] block mb-1">Metric</label>
+            <select id="filter-fact-metric" onchange="filterFactsList()" class="w-full bg-app-surface border border-app-border rounded-lg p-2 text-white">
+              <option value="all">All Metrics</option>
+              <option value="revenue">Revenue</option>
+              <option value="ebitda">EBITDA</option>
+              <option value="express_shipments">Express Shipments</option>
+              <option value="vehicle_deliveries">Vehicle Deliveries</option>
+              <option value="gdp_growth">GDP Growth</option>
+              <option value="cpi_inflation">CPI Inflation</option>
+            </select>
+          </div>
+          <div class="lg:col-span-2">
+            <label class="text-app-dim text-[10px] block mb-1">Search Text / Value</label>
+            <input type="text" id="filter-fact-search" oninput="filterFactsList()" placeholder="Filter facts by value, document, or snippet..." class="w-full bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
+          </div>
+        </div>
+
+        <!-- Facts Table -->
+        <div class="app-card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-app-surface text-app-muted border-b border-app-border uppercase text-[10px]">
+                <tr>
+                  <th class="p-3">Fact ID / Entity</th>
+                  <th class="p-3">Metric</th>
+                  <th class="p-3">Period</th>
+                  <th class="p-3">Value</th>
+                  <th class="p-3">Source & Location</th>
+                  <th class="p-3 text-right">Provenance</th>
+                </tr>
+              </thead>
+              <tbody id="facts-table-body" class="divide-y divide-app-border/60">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 4: 4 CORE RECONCILIATION CASES        -->
+      <!-- ========================================== -->
+      <div id="view-cases" class="hidden space-y-6">
+        <div class="border-b border-app-border pb-4">
+          <h2 class="text-xl font-bold text-white">4 Core Cross-Document Reconciliation Cases</h2>
+          <p class="text-xs text-app-muted mt-1">Deterministic automated resolution of multi-source contradictions, definitions, entity hierarchies, and macroeconomic discrepancies.</p>
+        </div>
+
+        <div id="cases-container" class="space-y-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 5: AUDIT WORKBENCH / QUERY            -->
+      <!-- ========================================== -->
+      <div id="view-query" class="hidden space-y-6">
+        <div class="border-b border-app-border pb-4">
+          <h2 class="text-xl font-bold text-white">Interactive Audit Workbench</h2>
+          <p class="text-xs text-app-muted mt-1">Execute deterministic verification queries with automated reconciliation & cross-document audit traces.</p>
+        </div>
+        <!-- Audit Risk Scorecard Widget -->
+        <div id="audit-scorecard-container" class="app-card rounded-xl p-5 border border-app-border space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-app-border pb-4">
+            <div class="flex items-center space-x-4">
+              <div class="relative w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-tr from-app-teal/20 to-emerald-500/20 border-2 border-app-teal shadow-lg shadow-app-teal/10">
+                <span id="scorecard-pct" class="text-base font-bold font-mono text-app-teal">90.5%</span>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm font-bold text-white font-mono">SYSTEMIC AUDIT HEALTH SCORE</span>
+                  <span id="scorecard-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/60 text-emerald-400 border border-emerald-800 font-bold">LOW RISK</span>
+                </div>
+                <p class="text-xs text-app-muted mt-0.5">Deterministic evaluation of 746 extracted facts across 33 cross-document relationships.</p>
+              </div>
+            </div>
+
+            <!-- Key Audit Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-center">
+              <div class="p-2.5 rounded-lg bg-app-surface/60 border border-app-border">
+                <div id="scorecard-total-facts" class="text-base font-bold text-white">746</div>
+                <div class="text-[10px] text-app-muted">Facts Audited</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-app-surface/60 border border-app-border">
+                <div id="scorecard-reconciled" class="text-base font-bold text-app-teal">27</div>
+                <div class="text-[10px] text-app-muted">Reconciled</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-app-surface/60 border border-app-border">
+                <div id="scorecard-corroborated" class="text-base font-bold text-emerald-400">1</div>
+                <div class="text-[10px] text-app-muted">Corroborated</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-app-surface/60 border border-red-900/60 bg-red-950/20">
+                <div id="scorecard-contradictions" class="text-base font-bold text-red-400">4</div>
+                <div class="text-[10px] text-red-300">Contradictions</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Compliance Checklist & High-Risk Item Accordion -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs font-mono">
+            <!-- Left: High Risk Anomaly Items -->
+            <div class="space-y-2">
+              <div class="text-[11px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+                <span class="text-red-400">🚩</span> <span>High-Risk Discrepancy Findings</span>
+              </div>
+              <div id="scorecard-high-risk-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-1">
+                <div class="p-2 rounded bg-red-950/20 border border-red-900/50 flex items-start justify-between">
+                  <div>
+                    <div class="font-bold text-red-300">Delhivery FY23 Revenue Divergence</div>
+                    <div class="text-[10px] text-app-muted">03-delhivery-q4-fy24 vs test_upload_doc (Δ 100.00%)</div>
+                  </div>
+                  <button onclick="openCaseDualCanvas(1)" class="px-2 py-0.5 bg-red-900/40 hover:bg-red-900/60 text-red-200 rounded text-[10px] cursor-pointer">Dual Canvas</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Remediation Checklist -->
+            <div class="space-y-2">
+              <div class="text-[11px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+                <span class="text-app-teal">📋</span> <span>Audit Verification Rules Checklist</span>
+              </div>
+              <div id="scorecard-checklist" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-1">
+                <div class="p-2 rounded bg-app-surface/60 border border-app-border flex items-center justify-between">
+                  <span class="text-app-text">1. Provenance Grounding Coordinates (100%)</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">PASSED</span>
+                </div>
+                <div class="p-2 rounded bg-app-surface/60 border border-app-border flex items-center justify-between">
+                  <span class="text-app-text">2. Note 34 Standalone vs Consol Scope</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">RECONCILED</span>
+                </div>
+                <div class="p-2 rounded bg-app-surface/60 border border-app-border flex items-center justify-between">
+                  <span class="text-app-text">3. Economic Survey vs IMF CPI (4.5% vs 4.8%)</span>
+                  <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-950 text-amber-400 border border-amber-800">REVIEW_FLAG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="app-card rounded-xl p-5 space-y-4">
+            <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Execute Fact Query</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="text-[11px] font-mono text-app-muted block mb-1">Entity</label>
+                <select id="query-entity" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white">
+                  <option value="delhivery">Delhivery Limited</option>
+                  <option value="apple">Apple Inc. (SEC Form 10-K)</option>
+                  <option value="tesla">Tesla Inc. (Shareholder Deck)</option>
+                  <option value="india_macro">India Macroeconomic (RBI / Govt / IMF)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] font-mono text-app-muted block mb-1">Metric Key</label>
+                <select id="query-metric" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white">
+                  <option value="revenue">revenue (Revenue from Operations / Net Sales / Total)</option>
+                  <option value="express_shipments">express_shipments (Parcel Shipment Volume)</option>
+                  <option value="vehicle_deliveries">vehicle_deliveries (Tesla Deliveries)</option>
+                  <option value="ebitda">ebitda (EBITDA / Adjusted EBITDA / Net Income)</option>
+                  <option value="pin_codes_covered">pin_codes_covered (PIN Code Reach)</option>
+                  <option value="gdp_growth">gdp_growth (Real GDP Growth %)</option>
+                  <option value="cpi_inflation">cpi_inflation (Headline Inflation %)</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] font-mono text-app-muted block mb-1">Period (Optional)</label>
+                <input type="text" id="query-period" placeholder="e.g. FY24, FY23, Q4_FY24, 2024-25" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
+              </div>
+              <div>
+                <label class="text-[11px] font-mono text-app-muted block mb-1">Free-Text Keyword (Optional)</label>
+                <input type="text" id="query-free-text" placeholder="e.g. 8141, 391, consolidated, standalone" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
+              </div>
+              <button onclick="runAuditQuery()" id="btn-execute-query" class="w-full py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-mono font-bold text-xs rounded-lg transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-app-teal/20">
+                <span>Execute Verification Query</span>
+              </button>
+            </div>
+
+            <div class="pt-4 border-t border-app-border">
+              <div class="text-[11px] font-mono text-app-muted mb-2">Preset Verification Scenarios:</div>
+              <div class="space-y-1.5">
+                <button onclick="setQueryPreset('delhivery', 'revenue', 'FY24', '')" id="preset-delhivery-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
+                  ⚡ Delhivery FY24 Revenue (Consol vs Standalone)
+                </button>
+                <button onclick="setQueryPreset('apple', 'revenue', 'FY24', '')" id="preset-apple-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
+                  🍎 Apple FY24 Net Sales ($391.0B 10-K)
+                </button>
+                <button onclick="setQueryPreset('tesla', 'revenue', 'FY24', '')" id="preset-tesla-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
+                  ⚡ Tesla FY24 Total Revenues ($97.7B Deck)
+                </button>
+                <button onclick="setQueryPreset('delhivery', 'express_shipments', 'FY24', '')" id="preset-delhivery-vol" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
+                  ⚡ Delhivery FY24 Express Shipments Volume
+                </button>
+                <button onclick="setQueryPreset('india_macro', 'cpi_inflation', 'FY25', '')" id="preset-macro-cpi" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
+                  🏛️ India FY25 CPI Inflation (Eco Survey vs IMF)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 app-card rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between border-b border-app-border pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-app-teal"></span>
+                  <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Audit Response & Provenance Trace</h3>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button onclick="exportActiveQueryCSV()" id="btn-export-query" class="hidden px-2 py-0.5 text-[10px] font-mono rounded bg-app-surface border border-app-teal/40 text-app-teal hover:bg-app-teal/10 transition cursor-pointer">
+                    ⬇️ Export CSV
+                  </button>
+                  <span id="query-status" class="text-[10px] font-mono text-app-teal bg-app-teal/10 px-2 py-0.5 rounded border border-app-teal/30">READY</span>
+                </div>
+              </div>
+              
+              <div id="query-result-content" class="space-y-4 font-mono text-xs text-app-text">
+                <div class="p-4 rounded-lg bg-app-surface/60 border border-app-border text-app-muted">
+                  Select a preset scenario or enter query parameters to inspect multi-source deterministic reconciliation.
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-app-border text-[10px] font-mono text-app-dim flex justify-between">
+              <span>Deterministic Knowledge Layer</span>
+              <span>Grounded in Exact Page Coordinates</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 6: UPLOAD PDF & INGEST                -->
+      <!-- ========================================== -->
+      <div id="view-upload" class="hidden space-y-6">
+        <div class="border-b border-app-border pb-4">
+          <h2 class="text-xl font-bold text-white">Upload & Ingest Any PDF Document</h2>
+          <p class="text-xs text-app-muted mt-1">Ingest corporate filings, 10-Ks, or macroeconomic reports. Extract table blocks with bounding boxes and reconcile facts automatically.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="app-card rounded-xl p-6 space-y-5 border-2 border-dashed border-app-border hover:border-app-teal/60 transition flex flex-col justify-between">
+            <div class="space-y-4 text-center">
+              <div class="w-14 h-14 rounded-xl bg-app-teal/10 border border-app-teal/30 text-app-teal flex items-center justify-center mx-auto text-2xl font-mono font-bold">
+                PDF
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">Select Any PDF Document</h3>
+                <p class="text-xs text-app-muted mt-1">Accepts annual reports, earnings decks, 10-K SEC filings, or research notes.</p>
+              </div>
+
+              <input type="file" id="pdfFileInput" accept=".pdf" class="hidden" onchange="handleFileSelected(event)">
+              <label for="pdfFileInput" id="btn-browse-pdf" class="cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-mono font-bold text-xs rounded-lg transition shadow-lg shadow-app-teal/20">
+                <span>Browse PDF File...</span>
+              </label>
+              <div id="selectedFileName" class="text-xs font-mono text-app-teal truncate max-w-full px-2"></div>
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-app-border">
+              <div>
+                <label class="text-[11px] font-mono text-app-muted block mb-1">Max Pages to Process</label>
+                <select id="uploadMaxPages" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white">
+                  <option value="15">15 Pages (Rapid)</option>
+                  <option value="30" selected>30 Pages (Standard)</option>
+                  <option value="60">60 Pages (Deep Analysis)</option>
+                  <option value="150">150 Pages (Full Filing)</option>
+                </select>
+              </div>
+              <button id="uploadSubmitBtn" onclick="submitPdfUpload()" class="w-full py-2.5 bg-app-surface hover:bg-app-teal hover:text-slate-950 border border-app-border text-app-text font-mono font-bold text-xs rounded-lg transition cursor-pointer">
+                Process & Extract Facts
+              </button>
+              <div id="uploadStatusMsg" class="text-xs font-mono text-center min-h-[20px]"></div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 app-card rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between border-b border-app-border pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-app-teal"></span>
+                  <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Indexed Documents in Knowledge Base</h3>
+                </div>
+                <span id="indexedDocsCountBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-app-surface text-app-teal border border-app-border">Loading docs...</span>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs font-mono">
+                  <thead class="bg-app-surface text-app-muted border-b border-app-border uppercase text-[10px]">
+                    <tr>
+                      <th class="p-2.5">Document File</th>
+                      <th class="p-2.5 text-center">Pages</th>
+                      <th class="p-2.5 text-center">Blocks</th>
+                      <th class="p-2.5 text-center">Tables</th>
+                      <th class="p-2.5 text-right">Extracted Facts</th>
+                    </tr>
+                  </thead>
+                  <tbody id="docsTableBodyUpload" class="divide-y divide-app-border/60">
+                    <!-- Injected via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-app-border text-[10px] font-mono text-app-dim flex justify-between">
+              <span>PyMuPDF + PaddleOCR Layout Analysis</span>
+              <span>Real-Time Knowledge Graph Ingestion</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW 7: INTERACTIVE KNOWLEDGE GRAPH        -->
+      <!-- ========================================== -->
+      <div id="view-graph" class="hidden space-y-4">
+        
+        <!-- Graph Control Header -->
+        <div class="app-card rounded-xl p-4 space-y-3">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-app-border pb-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-app-teal animate-pulse"></span>
+                <h2 class="text-sm font-bold text-white font-mono uppercase tracking-wider">Interactive Fact & Cross-Document Knowledge Graph</h2>
+              </div>
+              <p class="text-xs text-app-muted mt-0.5">Explore multi-entity grounded facts, document provenance hubs, and deterministic cross-source reconciliation links.</p>
+            </div>
+
+            <!-- Search & Highlight Bar -->
+            <div class="flex items-center space-x-2">
+              <div class="relative w-64">
+                <input type="text" id="graph-search-input" oninput="handleGraphSearch(event)" placeholder="Search node, metric, or value..." class="w-full pl-7 pr-3 py-1.5 bg-app-surface border border-app-border rounded-lg text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-app-teal transition">
+                <span class="absolute left-2.5 top-2 text-app-dim text-xs">🔍</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills & Layout Mode Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs font-mono">
+            <!-- Entity Filter Pills -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-app-dim text-[11px] mr-1">Entity:</span>
+              <button onclick="filterGraphEntity('all')" id="gfilter-all" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-teal/15 text-app-teal border border-app-teal/30 font-bold cursor-pointer">All Entities</button>
+              <button onclick="filterGraphEntity('delhivery')" id="gfilter-delhivery" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Delhivery</button>
+              <button onclick="filterGraphEntity('apple')" id="gfilter-apple" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Apple Inc.</button>
+              <button onclick="filterGraphEntity('tesla')" id="gfilter-tesla" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Tesla Inc.</button>
+              <button onclick="filterGraphEntity('india_macro')" id="gfilter-india_macro" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">India Macro</button>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-app-dim text-[11px] mr-1">Category:</span>
+              <button onclick="filterGraphCategory('all')" id="gcat-all" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-surface text-app-teal border border-app-teal/40 font-bold cursor-pointer">All</button>
+              <button onclick="filterGraphCategory('revenue')" id="gcat-revenue" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-teal-400 bg-app-surface/40 border border-transparent cursor-pointer">Revenue</button>
+              <button onclick="filterGraphCategory('profitability')" id="gcat-profitability" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-emerald-400 bg-app-surface/40 border border-transparent cursor-pointer">Profit</button>
+              <button onclick="filterGraphCategory('operations')" id="gcat-operations" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-amber-400 bg-app-surface/40 border border-transparent cursor-pointer">Operations</button>
+              <button onclick="filterGraphCategory('macro')" id="gcat-macro" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-blue-400 bg-app-surface/40 border border-transparent cursor-pointer">Macro</button>
+            </div>
+
+            <!-- Layout Mode Buttons -->
+            <div class="flex items-center space-x-1.5">
+              <span class="text-app-dim text-[11px]">Layout:</span>
+              <button onclick="setGraphLayoutMode('force')" id="glayout-force" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-teal/15 text-app-teal border border-app-teal/30 cursor-pointer font-bold">Network</button>
+              <button onclick="setGraphLayoutMode('radial')" id="glayout-radial" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">Radial</button>
+              <button onclick="setGraphLayoutMode('cluster')" id="glayout-cluster" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">Category</button>
+              <button onclick="setGraphLayoutMode('timeline')" id="glayout-timeline" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">⏱️ Timeline</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Graph Canvas & Inspector Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          
+          <!-- Left Main Graph Canvas (8 cols) -->
+          <div class="lg:col-span-8 relative bg-app-bg rounded-xl border border-app-border overflow-hidden h-[640px] flex flex-col justify-between shadow-2xl">
+            
+            <!-- SVG Canvas Area -->
+            <div class="relative w-full h-full">
+              <svg id="knowledgeGraphSvg" class="w-full h-full cursor-grab active:cursor-grabbing block">
+                <!-- SVG Defs for glowing drop shadows and markers injected via D3 -->
+              </svg>
+
+              <!-- Floating Glass Hover Tooltip Card -->
+              <div id="graph-tooltip" class="graph-tooltip hidden p-3 rounded-xl bg-slate-950/90 backdrop-blur-md border border-app-border shadow-2xl font-mono text-xs max-w-xs pointer-events-none">
+                <div id="tooltip-content" class="space-y-1.5">
+                  <!-- Dynamic content injected via JS -->
+                </div>
+              </div>
+
+              <!-- Loading Overlay -->
+              <div id="graph-loading" class="absolute inset-0 flex flex-col items-center justify-center bg-app-bg/80 backdrop-blur-sm z-20 text-xs font-mono text-app-teal hidden space-y-2">
+                <div class="w-6 h-6 border-2 border-app-teal border-t-transparent rounded-full animate-spin"></div>
+                <span class="animate-pulse">Synthesizing High-Resolution Force Graph...</span>
+              </div>
+
+              <!-- Floating Graph Toolbar Controls (Top Right) -->
+              <div class="absolute top-3 right-3 flex items-center space-x-1.5 bg-app-sidebar/85 backdrop-blur-md p-1.5 rounded-lg border border-app-border shadow-lg z-10 text-xs font-mono">
+                <button onclick="zoomGraphIn()" id="btn-gzoom-in" class="p-1.5 hover:bg-app-surface text-app-muted hover:text-white rounded transition cursor-pointer" title="Zoom In">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+                <button onclick="zoomGraphOut()" id="btn-gzoom-out" class="p-1.5 hover:bg-app-surface text-app-muted hover:text-white rounded transition cursor-pointer" title="Zoom Out">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                </button>
+                <button onclick="fitGraphView()" id="btn-gzoom-fit" class="px-2 py-1 hover:bg-app-surface text-app-muted hover:text-white rounded transition text-[10px] cursor-pointer" title="Fit Graph">
+                  Fit
+                </button>
+                <button onclick="resetGraphView()" id="btn-gzoom-reset" class="px-2 py-1 hover:bg-app-surface text-app-muted hover:text-white rounded transition text-[10px] cursor-pointer" title="Reset View">
+                  Reset
+                </button>
+                <div class="w-px h-4 bg-app-border mx-0.5"></div>
+                <button onclick="toggleSimulationPhysics()" id="btn-gsim-toggle" class="px-2 py-1 bg-app-surface text-app-teal rounded text-[10px] cursor-pointer" title="Pause / Resume Force Simulation">
+                  ⏸ Pause
+                </button>
+                <button onclick="toggleNodeLabels()" id="btn-glabels-toggle" class="px-2 py-1 hover:bg-app-surface text-app-muted hover:text-white rounded text-[10px] cursor-pointer" title="Toggle Label Density">
+                  Labels: Hubs
+                </button>
+              </div>
+
+              <!-- Floating Visual Legend Overlay (Bottom Left) -->
+              <div class="absolute bottom-3 left-3 bg-app-sidebar/90 backdrop-blur-md p-3 rounded-lg border border-app-border shadow-xl z-10 text-[10px] font-mono text-app-muted space-y-2 pointer-events-auto">
+                <div class="text-[10px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-app-teal"></span>
+                  <span>Knowledge Graph Legend</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-1 border-t border-app-border/60">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-3 h-3 rounded-full border border-white bg-red-500 inline-block flex-shrink-0"></span>
+                    <span class="text-white">Document Hub</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#00D4B2] inline-block flex-shrink-0"></span>
+                    <span class="text-app-teal">Revenue Fact</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#10B981] inline-block flex-shrink-0"></span>
+                    <span class="text-emerald-400">Profit / EBITDA</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] inline-block flex-shrink-0"></span>
+                    <span class="text-amber-400">Operations / Vol</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] inline-block flex-shrink-0"></span>
+                    <span class="text-blue-400">Macro / Inflation</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-0.5 bg-[#10B981] inline-block flex-shrink-0"></span>
+                    <span class="text-emerald-400">Corroboration</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-0.5 bg-[#EF4444] inline-block flex-shrink-0"></span>
+                    <span class="text-coral">Contradiction</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-4 h-0.5 bg-dashed border-t border-amber-400 inline-block flex-shrink-0"></span>
+                    <span class="text-amber-400">Reconciled / Temp</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Right Graph Node & Edge Inspector (4 cols) -->
+          <div class="lg:col-span-4 app-card rounded-xl p-5 space-y-4 flex flex-col justify-between h-[640px] overflow-y-auto custom-scroll shadow-2xl">
+            <div class="space-y-4">
+              <!-- Inspector Header -->
+              <div class="flex items-center justify-between border-b border-app-border pb-3">
+                <div class="flex items-center space-x-2">
+                  <span id="inspector-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-surface border border-app-border text-app-teal font-bold">INSPECTOR</span>
+                  <h3 id="inspector-title" class="text-xs font-bold text-white font-mono">Select Any Node or Link</h3>
+                </div>
+                <span id="inspector-type-pill" class="text-[10px] font-mono text-app-dim">Active</span>
+              </div>
+
+              <!-- Inspector Body Container -->
+              <div id="inspector-body" class="text-xs space-y-3 font-mono text-app-text">
+                <div class="p-4 rounded-xl bg-app-surface/40 border border-app-border text-center text-app-muted text-xs space-y-2">
+                  <div class="text-2xl">🕸️</div>
+                  <div class="font-bold text-white">Interactive Graph Explorer</div>
+                  <p class="text-[11px] text-app-dim leading-relaxed">
+                    Click any Document Hub, Fact Node, or Reconciliation Edge to inspect multi-source provenance, audit reasoning, or jump directly into the Canvas Studio.
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-lg bg-app-surface/20 border border-app-border/60 text-[11px] text-app-dim space-y-1.5">
+                  <div class="text-white font-bold">💡 Quick Shortcuts</div>
+                  <div>• <b class="text-app-text">Hover</b> over a node to focus its 1-hop connected subgraph.</div>
+                  <div>• <b class="text-app-text">Drag</b> nodes to custom positions with live physics.</div>
+                  <div>• <b class="text-app-text">Search</b> above to locate any metric in real time.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inspector Footer -->
+            <div class="pt-3 border-t border-app-border text-[10px] font-mono text-app-dim flex justify-between items-center">
+              <span>Deterministic Graph Layer</span>
+              <span class="text-app-teal font-semibold">D3.js Force v7</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. VISUAL PROVENANCE CANVAS STUDIO MODAL   -->
+  <!-- ========================================== -->
+  <div id="bbox-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="app-card rounded-2xl max-w-6xl w-full max-h-[92vh] flex flex-col border border-app-teal/50 shadow-2xl overflow-hidden bg-app-card">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-5 py-3 border-b border-app-border bg-app-surface/90">
+        <div class="flex items-center space-x-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-app-teal animate-pulse"></span>
+          <span class="text-xs font-bold text-white font-mono tracking-wider">VISUAL PROVENANCE CANVAS STUDIO</span>
+          <span id="modal-doc-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-bg text-app-teal border border-app-teal/30 truncate max-w-xs">Document</span>
+          <span id="modal-fact-id" class="text-xs font-mono text-app-muted hidden sm:inline"></span>
+        </div>
+        <button onclick="closeModal()" id="btn-close-modal-x" class="text-app-muted hover:text-white font-mono text-base px-2.5 py-1 rounded hover:bg-app-surface transition cursor-pointer" title="Close Canvas">✕</button>
+      </div>
+
+      <!-- Modal Split Layout -->
+      <div class="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-[520px]">
+        <!-- Left: Canvas Area -->
+        <div class="flex-1 bg-[#010306] relative overflow-hidden p-4 flex flex-col items-center justify-between border-b lg:border-b-0 lg:border-r border-app-border">
+          <div class="w-full flex items-center justify-between pb-3 text-xs font-mono text-app-muted border-b border-app-border/50 mb-3">
+            <div class="flex items-center space-x-2">
+              <button onclick="changeModalPage(-1)" id="btn-prev-page" class="px-2.5 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition flex items-center space-x-1 cursor-pointer">
+                <span>◀</span> <span>Prev</span>
+              </button>
+              <span id="modal-page-indicator" class="px-3 py-1 bg-app-bg rounded border border-app-border text-app-teal font-bold">Page 1 / 1</span>
+              <button onclick="changeModalPage(1)" id="btn-next-page" class="px-2.5 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition flex items-center space-x-1 cursor-pointer">
+                <span>Next</span> <span>▶</span>
+              </button>
+            </div>
+            
+            <!-- In-Canvas Keyword Search Bar -->
+            <div class="flex items-center space-x-1.5 bg-app-bg px-2.5 py-1 rounded-lg border border-app-border">
+              <input type="text" id="canvas-keyword-search" placeholder="Search in page..." onkeyup="if(event.key==='Enter') searchInCanvasPage()" class="w-24 sm:w-32 text-[11px] font-mono bg-transparent text-white outline-none placeholder-app-dim">
+              <button onclick="searchInCanvasPage()" id="btn-canvas-search" class="text-[10px] text-app-teal hover:text-teal-300 font-mono cursor-pointer" title="Find in page">🔍</button>
+              <span id="canvas-search-matches" class="text-[9px] text-app-teal font-mono hidden">0 hits</span>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <button onclick="zoomCanvas(-0.15)" id="btn-zoom-out" class="px-2 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition font-bold cursor-pointer" title="Zoom Out">-</button>
+              <span id="canvas-zoom-level" class="text-[11px] text-app-muted">100%</span>
+              <button onclick="zoomCanvas(0.15)" id="btn-zoom-in" class="px-2 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition font-bold cursor-pointer" title="Zoom In">+</button>
+              <button onclick="resetCanvasZoom()" id="btn-zoom-fit" class="px-2 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition text-[10px] cursor-pointer" title="Fit to Window">Fit</button>
+            </div>
+          </div>
+
+          <!-- Interactive Page Canvas Container -->
+          <div id="canvas-wrapper" class="flex-1 w-full flex items-center justify-center overflow-auto relative p-2 min-h-[400px]">
+            <div id="page-render-container" class="relative inline-block transition-transform duration-200 shadow-2xl rounded border border-app-border/60 bg-black">
+              <div id="canvas-loading" class="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center space-y-2 z-20 text-app-teal font-mono text-xs hidden">
+                <div class="w-6 h-6 border-2 border-app-teal border-t-transparent rounded-full animate-spin"></div>
+                <div>Rendering High-Res PDF Page...</div>
+              </div>
+
+              <img id="canvas-page-img" alt="PDF Page" class="max-w-full max-h-[60vh] object-contain rounded select-none block" onload="onPageImageLoaded()">
+              
+              <svg id="canvas-bbox-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 595 842" preserveAspectRatio="none">
+                <defs>
+                  <filter id="glow-teal" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <g id="svg-highlights-group">
+                  <rect id="canvas-highlight-rect" x="0" y="0" width="0" height="0" rx="3"
+                    fill="rgba(0, 212, 178, 0.25)"
+                    stroke="#00D4B2"
+                    stroke-width="3"
+                    filter="url(#glow-teal)" />
+                </g>
+              </svg>
+            </div>
+          </div>
+
+          <div class="w-full pt-2 text-[10px] font-mono text-app-dim flex items-center justify-between border-t border-app-border/40 mt-2">
+            <span id="canvas-coord-status" class="text-app-teal">Bounding Box Overlaid</span>
+            <span>PyMuPDF 150 DPI Crisp Direct Render</span>
+          </div>
+        </div>
+
+        <!-- Right: Metadata & Provenance -->
+        <div class="w-full lg:w-96 p-5 bg-app-surface/60 overflow-y-auto space-y-4 font-mono text-xs flex flex-col justify-between">
+          <div id="modal-content" class="space-y-4">
+            <!-- Dynamic Metadata injected here -->
+          </div>
+
+          <div class="pt-4 border-t border-app-border space-y-2">
+            <div class="flex space-x-2">
+              <button onclick="copyCitationJson()" id="btn-copy-citation" class="flex-1 px-3 py-2 bg-app-surface hover:bg-app-border border border-app-border hover:border-app-teal text-white text-xs font-mono rounded-lg transition flex items-center justify-center space-x-1 cursor-pointer">
+                <span>📋</span> <span>Copy Citation</span>
+              </button>
+              <button onclick="jumpToGraphFromModal()" id="btn-modal-to-graph" class="flex-1 px-3 py-2 bg-app-teal/15 hover:bg-app-teal/25 border border-app-teal/40 text-app-teal text-xs font-mono rounded-lg transition flex items-center justify-center space-x-1 cursor-pointer">
+                <span>🕸️</span> <span>View in Graph</span>
+              </button>
+            </div>
+            <button onclick="closeModal()" id="btn-close-modal-bottom" class="w-full py-1.5 bg-app-surface hover:bg-app-border text-app-muted hover:text-white text-xs font-mono rounded-lg transition cursor-pointer">
+              Close Canvas
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3B. DUAL-DOCUMENT EVIDENCE COMPARATOR MODAL -->
+  <!-- ========================================== -->
+  <div id="dual-bbox-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[60] hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="app-card rounded-2xl max-w-7xl w-full max-h-[96vh] flex flex-col border border-app-teal/50 shadow-2xl overflow-hidden bg-app-card">
+      
+      <!-- Dual Modal Header -->
+      <div class="flex items-center justify-between px-5 py-3 border-b border-app-border bg-app-surface/90">
+        <div class="flex items-center space-x-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-xs font-bold text-white font-mono tracking-wider">DUAL-DOCUMENT SYNCHRONIZED EVIDENCE COMPARATOR</span>
+          <span id="dual-status-badge" class="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800">CORROBORATION</span>
+          <span id="dual-delta-pill" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-bg text-app-teal border border-app-teal/30">Δ 0.00%</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="copyDualComparisonJson()" id="btn-copy-dual-json" class="px-3 py-1 bg-app-surface hover:bg-app-border border border-app-border text-white text-xs font-mono rounded-lg transition flex items-center space-x-1 cursor-pointer">
+            <span>📋</span> <span>Copy Comparison JSON</span>
+          </button>
+          <button onclick="closeDualModal()" id="btn-close-dual-x" class="text-app-muted hover:text-white font-mono text-base px-2.5 py-1 rounded hover:bg-app-surface transition cursor-pointer" title="Close Dual Canvas">✕</button>
+        </div>
+      </div>
+
+      <!-- Reasoning Strip -->
+      <div id="dual-reasoning-strip" class="px-5 py-2.5 bg-[#030712] border-b border-app-border flex items-center justify-between text-xs font-mono">
+        <div class="flex items-center space-x-2 text-app-muted truncate">
+          <span class="text-app-teal font-bold">REASONING:</span>
+          <span id="dual-reasoning-text" class="text-white truncate">Comparing primary and counter source evidence...</span>
+        </div>
+        <div class="flex items-center space-x-2 flex-shrink-0 text-[11px] text-app-dim">
+          <span>Status:</span>
+          <span id="dual-resolution-status" class="text-app-teal font-bold">VERIFIED</span>
+        </div>
+      </div>
+
+      <!-- Dual Split Canvas Body -->
+      <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 p-3 overflow-hidden min-h-[500px] bg-[#020408]">
+        
+        <!-- Left Pane: Source Document A -->
+        <div class="flex flex-col rounded-xl border border-app-border bg-[#010306] overflow-hidden p-3 justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-app-border/60 text-xs font-mono mb-2">
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="px-1.5 py-0.5 rounded bg-app-teal/15 text-app-teal text-[10px] font-bold">DOC A</span>
+              <span id="dual-left-doc-name" class="text-white font-bold text-[11px] truncate max-w-[200px]">Document A</span>
+              <span id="dual-left-val-pill" class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 text-[10px]">Value A</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button onclick="changeDualPage('left', -1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">◀</button>
+              <span id="dual-left-page-ind" class="text-[10px] text-app-teal px-1.5">Page 1</span>
+              <button onclick="changeDualPage('left', 1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">▶</button>
+              <button onclick="zoomDual('left', -0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">-</button>
+              <span id="dual-left-zoom" class="text-[9px] text-app-dim">100%</span>
+              <button onclick="zoomDual('left', 0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">+</button>
+            </div>
+          </div>
+
+          <div class="flex-1 w-full flex items-center justify-center overflow-auto relative p-2 min-h-[340px] bg-black/80 rounded border border-app-border/40">
+            <div id="dual-left-container" class="relative inline-block transition-transform duration-200">
+              <img id="dual-left-img" alt="Doc A Page" class="max-w-full max-h-[46vh] object-contain rounded select-none block" onload="onDualImageLoaded('left')">
+              <svg id="dual-left-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 595 842" preserveAspectRatio="none">
+                <rect id="dual-left-rect" x="0" y="0" width="0" height="0" rx="3" fill="rgba(16, 185, 129, 0.25)" stroke="#10B981" stroke-width="3" filter="url(#glow-teal)" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-app-border/40 text-[10px] font-mono text-app-muted truncate">
+            <b class="text-app-teal">Source A Snippet:</b> <span id="dual-left-snippet">...</span>
+          </div>
+        </div>
+
+        <!-- Right Pane: Target Document B -->
+        <div class="flex flex-col rounded-xl border border-app-border bg-[#010306] overflow-hidden p-3 justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-app-border/60 text-xs font-mono mb-2">
+            <div class="flex items-center space-x-2 min-w-0">
+              <span class="px-1.5 py-0.5 rounded bg-purple-950/60 text-purple-400 border border-purple-800 text-[10px] font-bold">DOC B</span>
+              <span id="dual-right-doc-name" class="text-white font-bold text-[11px] truncate max-w-[200px]">Document B</span>
+              <span id="dual-right-val-pill" class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 text-[10px]">Value B</span>
+            </div>
+            <div class="flex items-center space-x-1.5">
+              <button onclick="changeDualPage('right', -1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">◀</button>
+              <span id="dual-right-page-ind" class="text-[10px] text-app-teal px-1.5">Page 1</span>
+              <button onclick="changeDualPage('right', 1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">▶</button>
+              <button onclick="zoomDual('right', -0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">-</button>
+              <span id="dual-right-zoom" class="text-[9px] text-app-dim">100%</span>
+              <button onclick="zoomDual('right', 0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">+</button>
+            </div>
+          </div>
+
+          <div class="flex-1 w-full flex items-center justify-center overflow-auto relative p-2 min-h-[340px] bg-black/80 rounded border border-app-border/40">
+            <div id="dual-right-container" class="relative inline-block transition-transform duration-200">
+              <img id="dual-right-img" alt="Doc B Page" class="max-w-full max-h-[46vh] object-contain rounded select-none block" onload="onDualImageLoaded('right')">
+              <svg id="dual-right-svg" class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 595 842" preserveAspectRatio="none">
+                <rect id="dual-right-rect" x="0" y="0" width="0" height="0" rx="3" fill="rgba(16, 185, 129, 0.25)" stroke="#10B981" stroke-width="3" filter="url(#glow-teal)" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-app-border/40 text-[10px] font-mono text-app-muted truncate">
+            <b class="text-app-teal">Source B Snippet:</b> <span id="dual-right-snippet">...</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Bar -->
+      <div class="px-5 py-2.5 bg-app-surface border-t border-app-border flex items-center justify-between text-xs font-mono">
+        <div class="flex items-center space-x-3 text-app-dim text-[11px]">
+          <span>⚡ Synchronized Multi-Document Provenance</span>
+          <span>•</span>
+          <span class="text-app-teal">PyMuPDF 150 DPI Direct Vector Render</span>
+        </div>
+        <button onclick="closeDualModal()" class="px-4 py-1 bg-app-surface hover:bg-app-border text-white text-xs font-mono rounded-lg transition cursor-pointer">
+          Close Comparator
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3C. FLOATING AI COPILOT PILL TRIGGER       -->
+  <!-- ========================================== -->
+  <button id="btn-floating-copilot" onclick="toggleCopilotDrawer()" class="fixed bottom-6 right-6 z-40 px-4 py-2.5 rounded-full bg-gradient-to-r from-app-teal via-teal-400 to-app-teal hover:from-teal-400 hover:to-app-teal text-slate-950 font-mono font-black text-xs shadow-[0_0_24px_rgba(0,212,178,0.5)] flex items-center space-x-2 transition transform hover:scale-105 cursor-pointer">
+    <span class="text-sm">✨</span>
+    <span>AI Fact Auditor</span>
+    <kbd class="text-[10px] px-1.5 py-0.5 rounded bg-slate-950/20 text-slate-950 font-bold border border-slate-950/20">⌘ J</kbd>
+  </button>
+
+  <!-- ========================================== -->
+  <!-- 3D. AI FACT AUDITOR COPILOT DRAWER         -->
+  <!-- ========================================== -->
+  <div id="copilot-drawer" class="fixed inset-y-0 right-0 z-[70] w-full max-w-md md:max-w-lg bg-[#04070D] border-l border-app-border shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Copilot Header -->
+    <div class="p-4 border-b border-app-border bg-[#080E1A] flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-lg bg-app-teal/15 border border-app-teal/30 flex items-center justify-center text-app-teal text-sm">
+          ✨
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-xs font-bold text-white font-mono">AI Fact Auditor Copilot</h3>
+            <span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-950/60 text-emerald-400 border border-emerald-800">ONLINE</span>
+          </div>
+          <p class="text-[10px] font-mono text-app-dim">9 Filings • 744 Grounded Facts • Deterministic Provenance</p>
+        </div>
+      </div>
+      <button onclick="toggleCopilotDrawer()" id="btn-close-copilot" class="text-app-muted hover:text-white font-mono text-base p-1.5 rounded hover:bg-app-surface transition cursor-pointer">✕</button>
+    </div>
+
+    <!-- Suggested Quick Chips -->
+    <div class="p-3 border-b border-app-border/70 bg-[#020408] overflow-x-auto custom-scroll flex space-x-2 flex-shrink-0">
+      <button onclick="askCopilotPreset('Compare Delhivery Standalone vs Consolidated FY24 revenue')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
+        ⚡ Consol vs Standalone FY24
+      </button>
+      <button onclick="askCopilotPreset('What are the conflicting India GDP forecasts for FY25?')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
+        🏛️ India FY25 GDP Spread
+      </button>
+      <button onclick="askCopilotPreset('What was Delhivery FY24 Express Parcel shipment volume?')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
+        📦 Parcel Volume 740M
+      </button>
+      <button onclick="askCopilotPreset('Show Apple FY24 Net Sales product breakdown')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
+        🍎 Apple FY24 Net Sales
+      </button>
+    </div>
+
+    <!-- Chat Messages Thread -->
+    <div id="copilot-messages" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4 font-mono text-xs">
+      <!-- Intro message -->
+      <div class="flex items-start space-x-3">
+        <div class="w-6 h-6 rounded-full bg-app-teal/20 border border-app-teal/40 text-app-teal flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+          ✨
+        </div>
+        <div class="p-3.5 rounded-xl bg-app-surface/80 border border-app-border text-app-text space-y-2 max-w-[90%]">
+          <p class="leading-relaxed">
+            Hello! I am your <b>Grounded Financial Fact Auditor</b>. Ask me to compare financial figures across filings, trace institutional GDP/inflation contradictions, or explain accounting scope adjustments.
+          </p>
+          <div class="text-[10px] text-app-dim">Every fact includes exact page citations with bounding boxes.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Input Form -->
+    <div class="p-3.5 border-t border-app-border bg-[#080E1A]">
+      <form id="copilot-form" onsubmit="submitCopilotChat(event)" class="flex items-center space-x-2">
+        <input type="text" id="copilot-input" placeholder="Ask a financial or audit question..." class="flex-1 px-3.5 py-2.5 bg-app-surface border border-app-border rounded-xl text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-app-teal transition">
+        <button type="submit" id="btn-copilot-send" class="px-4 py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-bold font-mono text-xs rounded-xl transition cursor-pointer flex items-center space-x-1 shadow-md shadow-app-teal/20">
+          <span>Send</span>
+          <span>→</span>
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. CORE JAVASCRIPT APPLICATION ENGINE      -->
+  <!-- ========================================== -->
+  <script src="/ui/app.js"></script>
+</body>
+</html>
