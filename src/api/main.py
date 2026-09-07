@@ -40,6 +40,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
+ui_dir = os.path.join(os.path.dirname(__file__), "..", "ui")
+if os.path.exists(ui_dir):
+    app.mount("/ui", StaticFiles(directory=ui_dir), name="ui")
+
 @app.get("/", response_class=HTMLResponse)
 def get_dashboard_ui():
     ui_path = os.path.join(os.path.dirname(__file__), "..", "ui", "index.html")
@@ -62,11 +68,13 @@ def list_documents():
     return store.get_all_documents()
 
 def find_document_pdf_path(doc_id_or_name: str) -> Optional[str]:
+    # 1. Check in store.documents
     if doc_id_or_name in store.documents:
         path = store.documents[doc_id_or_name].file_path
         if os.path.exists(path):
             return path
 
+    # Check by document_name or substring in store.documents
     for doc in store.documents.values():
         if (doc.document_name == doc_id_or_name or 
             doc_id_or_name.lower() in doc.document_name.lower() or 
@@ -74,6 +82,7 @@ def find_document_pdf_path(doc_id_or_name: str) -> Optional[str]:
             if os.path.exists(doc.file_path):
                 return doc.file_path
 
+    # 2. Search starter-datasets and uploads directories
     search_dirs = [
         os.path.join(".", "starter-datasets", "delhivery"),
         os.path.join(".", "starter-datasets", "india-macroeconomy"),
@@ -140,10 +149,12 @@ def get_document_page_metadata(doc_id: str, page_num: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get metadata: {str(e)}")
 
+
 @app.get("/api/analytics/charts")
 def get_charts_data(entity_id: Optional[str] = Query(None)):
     """Returns multi-dimensional financial and macroeconomic time-series data for Chart.js across Delhivery, Apple, Tesla, and Macro."""
     
+    # Live dynamic metrics
     fact_counts_by_entity = {
         "delhivery": sum(1 for f in store.facts.values() if f.entity_id == "delhivery"),
         "apple": sum(1 for f in store.facts.values() if f.entity_id == "apple"),
@@ -249,6 +260,7 @@ def get_charts_data(entity_id: Optional[str] = Query(None)):
                 "margin": "4.9% Fiscal Deficit"
             }
         },
+        # Legacy compatibility keys for existing charts
         "timeseries": {
             "labels": ["FY21", "FY22", "FY23", "Q1 FY24", "Q2 FY24", "Q3 FY24", "Q4 FY24", "FY24"],
             "revenue_cr": [3647, 6882, 7225, 1930, 1942, 2194, 2075, 8141],
@@ -290,6 +302,7 @@ def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
     if entity_id and entity_id != "all":
         docs = [d for d in docs if entity_id.lower() in d.document_name.lower() or (entity_id == "india_macro" and any(k in d.document_name.lower() for k in ["economic", "rbi", "imf"]))]
 
+    # 1. Document Hub Nodes
     entity_colors = {
         "delhivery": "#EF4444",
         "apple": "#8B5CF6",
@@ -320,18 +333,20 @@ def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
             "radius": 24
         })
 
+    # 2. Fact Nodes
     all_facts = list(store.facts.values())
     if entity_id and entity_id != "all":
         all_facts = [f for f in all_facts if f.entity_id == entity_id]
 
     category_colors = {
-        "revenue": "#00D4B2",
-        "profitability": "#10B981",
-        "operations": "#F59E0B",
-        "macro": "#3B82F6",
-        "general": "#8B5CF6"
+        "revenue": "#00D4B2",       # Teal
+        "profitability": "#10B981", # Emerald
+        "operations": "#F59E0B",    # Amber
+        "macro": "#3B82F6",         # Royal Blue
+        "general": "#8B5CF6"        # Purple
     }
 
+    # Pick balanced, salient facts per document (up to 4-5 per document)
     core_case_fact_ids = {
         "delh_rev_consol_fy24", "delh_rev_stand_fy24",
         "delh_vol_fy24_annual", "delh_vol_fy24_deck",
@@ -343,6 +358,7 @@ def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
     doc_fact_counts = {}
     seen_keys = set()
 
+    # 1. First: core cross-document cases facts
     for f in all_facts:
         if f.fact_id in core_case_fact_ids or any(k in f.fact_id.lower() for k in ["consol", "stand", "rbi", "imf", "net_sales", "total_revenues"]):
             ev = f.evidence[0] if f.evidence else None
@@ -352,6 +368,7 @@ def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
                 doc_fact_counts[doc_id] = doc_fact_counts.get(doc_id, 0) + 1
                 seen_keys.add((f.entity_id, f.metric_id, f.period_id))
 
+    # 2. Second: diverse core metric facts per document
     priority_metrics = ["revenue", "ebitda", "express_shipments", "vehicle_deliveries", "gdp_growth", "cpi_inflation", "pin_codes_covered"]
     for f in all_facts:
         if f not in displayed_facts:
@@ -407,6 +424,7 @@ def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
                 "width": 1
             })
 
+    # 3. Reconciliation Edges (Prune duplicates to keep graph crisp and readable)
     edge_counts_per_node = {}
     seen_edges = set()
     for r in store.relationships:
@@ -585,6 +603,7 @@ def get_case_comparison(case_num: int):
         } if (f2 or rel) else None
     }
 
+
 class QueryRequest(BaseModel):
     query: Optional[str] = None
     entity_id: Optional[str] = None
@@ -628,6 +647,7 @@ def handle_fact_query(
     )
 
     fact_ids = {f.fact_id for f in matched_facts}
+    # Match relationships strictly involving these matched facts and entity
     related_rels = [
         r for r in store.relationships
         if (r.source_fact_id in fact_ids or r.target_fact_id in fact_ids)
@@ -658,6 +678,7 @@ def handle_fact_query(
         for f in matched_facts[:10]
     ]
 
+    # Deterministic summary
     doc_sources = {f.evidence[0].document_name for f in matched_facts if f.evidence}
     answer = f"Found {len(matched_facts)} grounded facts across {len(doc_sources)} document(s). Top metric: {top_fact.metric_id.upper()} ({top_fact.period_id}) = {top_fact.raw_value} [{top_fact.scope}]."
     if related_rels:
@@ -687,6 +708,7 @@ def copilot_chat_get(message: str = Query(...)):
 def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
     p_lower = prompt.lower()
     
+    # 1. Entity detection
     entity_id = None
     if "delhivery" in p_lower or "spoton" in p_lower:
         entity_id = "delhivery"
@@ -697,6 +719,7 @@ def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
     elif any(k in p_lower for k in ["macro", "gdp", "inflation", "cpi", "rbi", "imf", "economic survey", "india"]):
         entity_id = "india_macro"
 
+    # 2. Metric detection
     metric_id = None
     if "revenue" in p_lower or "sales" in p_lower or "turnover" in p_lower or "topline" in p_lower:
         metric_id = "revenue"
@@ -713,12 +736,14 @@ def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
     elif "pin_code" in p_lower or "reach" in p_lower or "pincode" in p_lower:
         metric_id = "pin_codes_covered"
 
+    # 3. Period detection
     period_id = None
     for p in ["fy24", "fy23", "fy22", "fy21", "q4_fy24", "q3_fy24", "q2_fy24", "q1_fy24", "2024-25"]:
         if p.replace("_", " ") in p_lower or p in p_lower:
             period_id = p
             break
 
+    # 4. Search matching facts
     matched_facts = store.search_facts(
         query=prompt if not (entity_id or metric_id) else None,
         entity_id=entity_id,
@@ -726,6 +751,7 @@ def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
         period_id=period_id
     )
 
+    # 5. Search matching relationships
     fact_ids = {f.fact_id for f in matched_facts}
     related_rels = [
         r for r in store.relationships
@@ -733,6 +759,7 @@ def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
         or (entity_id and r.entity_id == entity_id and (not metric_id or metric_id.lower() in r.metric_id.lower()))
     ]
 
+    # Build citations
     citations = []
     for f in matched_facts[:6]:
         ev = f.evidence[0] if f.evidence else None
@@ -753,6 +780,7 @@ def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
 
     primary_rel = related_rels[0] if related_rels else None
 
+    # Construct rich answer
     if not matched_facts:
         answer = f"I searched across all 9 indexed financial filings and reports, but could not ground a direct fact for **'{prompt}'**. Try asking about Delhivery revenue/volumes, Apple net sales, Tesla revenues/deliveries, or Indian macroeconomic GDP/CPI."
     else:
@@ -822,6 +850,7 @@ def search_in_document_page(doc_id: str, page_num: int, q: str = Query(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
+
 @app.get("/api/audit/risk-scorecard")
 def get_audit_risk_scorecard():
     """Scans all facts and relationships to produce a comprehensive audit health scorecard."""
@@ -833,6 +862,8 @@ def get_audit_risk_scorecard():
     reconciled_temporal = [r for r in store.relationships if r.relation_type == "RECONCILED_TEMPORAL"]
     corroborations = [r for r in store.relationships if r.relation_type == "CORROBORATION"]
     
+    # Calculate audit health score out of 100
+    # Penalty for unresolved contradictions without footnotes
     score = 100.0 - (len(contradictions) * 2.5) + (len(corroborations) * 0.5)
     score = max(70.0, min(99.5, score))
     
@@ -926,6 +957,7 @@ def flag_fact_human(fact_id: str, req: FactVerifyRequest):
         "message": f"Fact '{fact_id}' successfully flagged for senior auditor review."
     }
 
+
 @app.get("/api/export/facts.csv")
 def export_facts_csv(
     query: Optional[str] = Query(None),
@@ -939,6 +971,7 @@ def export_facts_csv(
     output = io.StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
     
+    # Header row
     writer.writerow([
         "fact_id",
         "entity_id",
