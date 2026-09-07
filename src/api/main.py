@@ -40,6 +40,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
+ui_dir = os.path.join(os.path.dirname(__file__), "..", "ui")
+if os.path.exists(ui_dir):
+    app.mount("/ui", StaticFiles(directory=ui_dir), name="ui")
+
 @app.get("/", response_class=HTMLResponse)
 def get_dashboard_ui():
     ui_path = os.path.join(os.path.dirname(__file__), "..", "ui", "index.html")
