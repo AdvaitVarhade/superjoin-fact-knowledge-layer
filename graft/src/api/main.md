@@ -1,0 +1,33 @@
+# src/api/main.py
+
+- lifespan · async function · L24-L26 — async def lifespan(app: FastAPI):
+- get_dashboard_ui · function · L44-L49 — def get_dashboard_ui():
+- health_check · function · L52-L58 — def health_check():
+- list_documents · function · L61-L62 — def list_documents():
+- find_document_pdf_path · function · L64-L94 — def find_document_pdf_path(doc_id_or_name: str) -> Optional[str]:
+- get_document_page_image · function · L98-L121 — def get_document_page_image(doc_id: str, page_num: int):
+- get_document_page_metadata · function · L124-L144 — def get_document_page_metadata(doc_id: str, page_num: int):
+- get_charts_data · function · L148-L275 — def get_charts_data(entity_id: Optional[str] = Query(None)):
+- get_metric_category · function · L277-L287 — def get_metric_category(metric_id: str) -> str:
+- get_knowledge_graph · function · L290-L456 — def get_knowledge_graph(entity_id: Optional[str] = Query(None)):
+- upload_document · async function · L459-L479 — async def upload_document(file: UploadFile = File(...), max_pages: int = Form(25)):
+- get_facts · function · L482-L488 — def get_facts(
+- get_relationships · function · L491-L496 — def get_relationships(
+- get_assignment_cases · function · L499-L500 — def get_assignment_cases():
+- get_reconciliation_comparison · function · L503-L551 — def get_reconciliation_comparison(rel_id: str):
+- get_case_comparison · function · L554-L598 — def get_case_comparison(case_num: int):
+- QueryRequest · class · L601-L605 — class QueryRequest(BaseModel):
+- post_query_facts · function · L608-L614 — def post_query_facts(req: QueryRequest):
+- get_query_facts · function · L617-L628 — def get_query_facts(
+- handle_fact_query · function · L630-L688 — def handle_fact_query(
+- CopilotRequest · class · L690-L692 — class CopilotRequest(BaseModel):
+- copilot_chat · function · L695-L696 — def copilot_chat(req: CopilotRequest):
+- copilot_chat_get · function · L699-L700 — def copilot_chat_get(message: str = Query(...)):
+- handle_copilot_chat · function · L702-L816 — def handle_copilot_chat(prompt: str) -> Dict[str, Any]:
+- search_in_document_page · function · L819-L845 — def search_in_document_page(doc_id: str, page_num: int, q: str = Query(...)):
+- get_audit_risk_scorecard · function · L849-L908 — def get_audit_risk_scorecard():
+- FactVerifyRequest · class · L910-L912 — class FactVerifyRequest(BaseModel):
+- verify_fact_human · function · L915-L933 — def verify_fact_human(fact_id: str, req: FactVerifyRequest):
+- flag_fact_human · function · L936-L952 — def flag_fact_human(fact_id: str, req: FactVerifyRequest):
+- export_facts_csv · function · L956-L1023 — def export_facts_csv(
+- export_audit_package_json · function · L1026-L1059 — def export_audit_package_json():

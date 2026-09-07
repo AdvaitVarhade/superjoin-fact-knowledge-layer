@@ -73,7 +73,7 @@ def parse_period(text: str) -> Period:
         )
 
     # Pattern 5: Fiscal Range 2023-24 / 2023-2024
-    range_match = re.search(r'(?:fy\s*)?(\d{4})\s*[-\u2013]\s*(\d{2,4})', raw_lower)
+    range_match = re.search(r'(?:fy\s*)?(\d{4})\s*[-–]\s*(\d{2,4})', raw_lower)
     if range_match:
         start_yr = int(range_match.group(1))
         end_yr_val = range_match.group(2)
@@ -88,7 +88,7 @@ def parse_period(text: str) -> Period:
         )
 
     # Pattern 6: FY24 / FY2024
-    fy_match = re.search(r'\bfy\s*(\\d{2,4})\b', raw_lower)
+    fy_match = re.search(r'\bfy\s*(\d{2,4})\b', raw_lower)
     if fy_match:
         yr_val = fy_match.group(1)
         end_yr = int(yr_val) if len(yr_val) == 4 else 2000 + int(yr_val)

@@ -1,6 +1,8 @@
-from typing import List, Optional, Any
-from pydantic import BaseModel
+﻿from typing import List, Optional, Any, Dict
+from pydantic import BaseModel, Field
 from src.models.evidence import Evidence
+from src.models.entity import Entity
+from src.models.metric import Metric
 from src.models.period import Period
 
 class Fact(BaseModel):
@@ -8,14 +10,11 @@ class Fact(BaseModel):
     entity_id: str
     metric_id: str
     period_id: str
-    period: Period
     raw_value: str
-    normalized_value: Optional[float] = None
-    unit: Optional[str] = None
-    currency: Optional[str] = None
-    scope: str = 'Consolidated'  # 'Consolidated', 'Standalone', 'Segment', 'Macro'
-    restatement_flag: bool = False
-    evidence: List[Evidence]
+    normalized_value: float
+    unit: str  # INR, Cr, Lakh, %, USD, count, etc.
+    scope: str = "Consolidated"  # Consolidated, Standalone, Segment, Total, etc.
+    segment: Optional[str] = None  # e.g., Express Parcel, PTL, Supply Chain
     confidence: float = 1.0
-    extraction_method: str = 'rule_regex'  # 'rule_regex', 'table_parser', 'llm'
-    verification_status: str = 'PENDING'
+    evidence: List[Evidence] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)

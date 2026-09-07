@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+
+# Environment & Temporary
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+*.tmp
+
+# IDEs and AI tool directories
+.vscode/
+.idea/
+.agents/
+.claude/
+.cursor/
+.gemini/
+.windsurf/
+
+# Project temporary scratch & uploaded storage
+scratch/
+uploads/
+starter-datasets.zip
+
+# Graft internal caches (keep markdown nodes & INDEX.md)
+graft/.cache/
+graft/.graph/

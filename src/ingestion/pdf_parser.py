@@ -73,7 +73,8 @@ class PDFIngestor:
                     df = tab.extract()
                     if df and len(df) > 1:
                         headers = [str(c or '').strip() for c in df[0]]
-                        rows = [[str(c or '').strip() for c in r] for r in df[1:]]\n                        tab_bbox = [round(c, 2) for c in tab.bbox]
+                        rows = [[str(c or '').strip() for c in r] for r in df[1:]]
+                        tab_bbox = [round(c, 2) for c in tab.bbox]
                         tables.append(ParsedTable(
                             page_number=page_num,
                             bbox=tab_bbox,

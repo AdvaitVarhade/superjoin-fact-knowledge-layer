@@ -1,9 +1,9 @@
-from typing import Optional
-from pydantic import BaseModel
+﻿from typing import List, Optional
+from pydantic import BaseModel, Field
 
 class Entity(BaseModel):
-    entity_id: str  # e.g., 'delhivery_limited', 'apple_inc', 'tesla_inc', 'rbi'
+    entity_id: str
     name: str
-    sector: Optional[str] = None
-    country: Optional[str] = 'IN'
+    entity_type: str = "Company"  # Company, Economy, Institution, Segment
+    aliases: List[str] = Field(default_factory=list)
     description: Optional[str] = None

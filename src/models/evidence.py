@@ -1,5 +1,5 @@
-from typing import List, Optional
-from pydantic import BaseModel
+﻿from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
 
 class BoundingBox(BaseModel):
     x0: float
@@ -8,13 +8,13 @@ class BoundingBox(BaseModel):
     y1: float
 
 class Evidence(BaseModel):
+    evidence_id: str
     document_id: str
     document_name: str
     page_number: int
+    bbox: Optional[List[float]] = None  # [x0, y0, x1, y1]
     text_snippet: str
-    table_index: Optional[int] = None
-    row_index: Optional[int] = None
-    column_index: Optional[int] = None
-    bounding_box: Optional[BoundingBox] = None
-    surrounding_context: Optional[str] = None
-    source_type: str = 'text'  # 'table', 'text', 'footnote', 'header'
+    section_name: Optional[str] = None
+    table_context: Optional[Dict[str, Any]] = None
+    extraction_method: str = "pdf_layout"
+    confidence: float = 1.0

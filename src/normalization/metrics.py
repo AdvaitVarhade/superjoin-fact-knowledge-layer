@@ -1,75 +1,160 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
+from src.models.metric import Metric
 
-CANONICAL_METRICS: Dict[str, List[str]] = {
-    "revenue": [
-        "revenue from operations",
-        "total income",
-        "total revenue",
-        "revenue",
-        "net sales",
-        "sales",
-        "topline",
-        "revenues",
-        "operating revenue",
-        "turnover",
-        "service revenue",
-    ],
-    "ebitda": [
-        "adjusted ebitda",
-        "ebitda",
-        "operating profit",
-        "operating ebitda",
-        "ebit",
-        "operating earnings",
-    ],
-    "express_shipments": [
-        "express parcel shipments",
-        "express parcel volume",
-        "express shipments",
-        "express parcel shipment volume",
-        "shipment volume",
-        "express parcels",
-        "parcel volume",
-        "parcel count",
-        "packages delivered",
-    ],
-    "pin_codes_covered": [
-        "pin codes covered",
-        "pincodes",
-        "pincode reach",
-        "pin code reach",
-        "pincodes covered",
-        "active pin codes",
-        "network reach pin codes",
-    ],
-    "gdp_growth": [
-        "real gdp growth",
-        "gdp growth rate",
-        "gdp growth",
-        "economic growth",
-        "projected gdp growth",
-        "gdp forecast",
-    ],
-    "cpi_inflation": [
-        "headline inflation",
-        "cpi inflation",
-        "consumer price index inflation",
-        "retail inflation",
-        "headline cpi",
-        "inflation forecast",
-    ],
-    "vehicle_deliveries": [
-        "total vehicle deliveries",
-        "deliveries",
-        "model 3/y deliveries",
-        "other models deliveries",
-    ]
+CANONICAL_METRICS: Dict[str, Metric] = {
+    'revenue': Metric(
+        metric_id='revenue',
+        name='Revenue from Operations',
+        category='Financial',
+        default_unit='INR',
+        description='Total operating revenue or net sales from operations',
+        synonyms=['revenue', 'total revenue', 'revenue from operations', 'net revenue', 'operating revenue', 'sales']
+    ),
+    'ebitda': Metric(
+        metric_id='ebitda',
+        name='Adjusted EBITDA',
+        category='Financial',
+        default_unit='INR',
+        description='Earnings before interest, taxes, depreciation, and amortization',
+        synonyms=['ebitda', 'adjusted ebitda', 'operating ebitda', 'ebitda margin']
+    ),
+    'pat': Metric(
+        metric_id='pat',
+        name='Profit / Loss After Tax (PAT)',
+        category='Financial',
+        default_unit='INR',
+        description='Net profit or loss after tax for the period',
+        synonyms=['pat', 'profit after tax', 'net profit', 'net loss', 'profit / (loss) for the year', 'profit for the period', 'net income']
+    ),
+    'express_shipments': Metric(
+        metric_id='express_shipments',
+        name='Express Parcel Shipments Volume',
+        category='Operational',
+        default_unit='Million Packages',
+        description='Total express parcel volume shipped',
+        synonyms=['express parcel volume', 'express parcel shipments', 'parcel volume', 'shipments', 'volume (mn pkgs)', 'express volume']
+    ),
+    'part_truckload_volume': Metric(
+        metric_id='part_truckload_volume',
+        name='Part Truckload (PTL) Volume',
+        category='Operational',
+        default_unit='Million Tonnes',
+        description='Freight tonnage transported via Part Truckload',
+        synonyms=['ptl freight volume', 'ptl volume', 'part truckload volume', 'freight tonnage']
+    ),
+    'pin_codes_covered': Metric(
+        metric_id='pin_codes_covered',
+        name='PIN Codes Covered',
+        category='Operational',
+        default_unit='Count',
+        description='Total number of active postal PIN codes serviced across India',
+        synonyms=['pin codes', 'pincodes', 'pincodes covered', 'network pincodes', 'active pin codes']
+    ),
+    'gdp_growth': Metric(
+        metric_id='gdp_growth',
+        name='Real GDP Growth Rate',
+        category='Macroeconomic',
+        default_unit='%',
+        description='Annual growth rate of real Gross Domestic Product',
+        synonyms=['gdp growth', 'real gdp growth', 'growth of gdp', 'real gross domestic product growth']
+    ),
+    'cpi_inflation': Metric(
+        metric_id='cpi_inflation',
+        name='Headline CPI Inflation',
+        category='Macroeconomic',
+        default_unit='%',
+        description='Consumer Price Index combined headline inflation rate',
+        synonyms=['cpi inflation', 'headline inflation', 'consumer price index', 'cpi-c inflation', 'inflation']
+    ),
+    'operating_income': Metric(
+        metric_id='operating_income',
+        name='Operating Income / Profit',
+        category='Financial',
+        default_unit='USD',
+        description='Operating income or operating profit before non-operating items',
+        synonyms=['operating income', 'operating profit', 'income from operations']
+    ),
+    'gross_profit': Metric(
+        metric_id='gross_profit',
+        name='Gross Profit',
+        category='Financial',
+        default_unit='USD',
+        description='Total gross profit or gross margin',
+        synonyms=['gross profit', 'gross margin', 'total gross profit']
+    ),
+    'cost_of_sales': Metric(
+        metric_id='cost_of_sales',
+        name='Cost of Sales / Revenues',
+        category='Financial',
+        default_unit='USD',
+        description='Cost of sales or cost of goods sold',
+        synonyms=['cost of sales', 'cost of goods sold', 'cost of revenues', 'total cost of sales']
+    ),
+    'deliveries': Metric(
+        metric_id='deliveries',
+        name='Total Deliveries',
+        category='Operational',
+        default_unit='Vehicles',
+        description='Total vehicle or unit deliveries',
+        synonyms=['total deliveries', 'vehicle deliveries', 'deliveries', 'total vehicle deliveries']
+    ),
+    'free_cash_flow': Metric(
+        metric_id='free_cash_flow',
+        name='Free Cash Flow',
+        category='Financial',
+        default_unit='USD',
+        description='Operating cash flow less capital expenditures',
+        synonyms=['free cash flow', 'fcf', 'operating cash flow', 'cash generated by operating activities']
+    ),
+    'cad_to_gdp': Metric(
+        metric_id='cad_to_gdp',
+        name='Current Account Deficit (% of GDP)',
+        category='Macroeconomic',
+        default_unit='%',
+        description='Current Account Deficit as a percentage of GDP',
+        synonyms=['current account deficit', 'cad', 'cad (% of gdp)', 'current account balance']
+    ),
+    'fiscal_deficit': Metric(
+        metric_id='fiscal_deficit',
+        name='Gross Fiscal Deficit (% of GDP)',
+        category='Macroeconomic',
+        default_unit='%',
+        description='Central government gross fiscal deficit as percentage of GDP',
+        synonyms=['gross fiscal deficit', 'fiscal deficit', 'gfd (% of gdp)']
+    )
 }
 
-def canonicalize_metric(text: str) -> str:
-    text_lower = text.lower().strip()
-    for canonical, variations in CANONICAL_METRICS.items():
-        for var in variations:
-            if var in text_lower:
-                return canonical
-    return text_lower.replace(" ", "_")
+def canonicalize_metric(metric_text: str) -> Metric:
+    cleaned = metric_text.lower().strip()
+    
+    for metric_id, metric in CANONICAL_METRICS.items():
+        if cleaned == metric_id:
+            return metric
+        for syn in metric.synonyms:
+            if syn in cleaned or cleaned in syn:
+                return metric
+
+    if 'revenue' in cleaned or 'sales' in cleaned or 'turnover' in cleaned:
+        return CANONICAL_METRICS['revenue']
+    if 'ebitda' in cleaned:
+        return CANONICAL_METRICS['ebitda']
+    if 'profit' in cleaned or 'loss' in cleaned or 'pat' in cleaned:
+        return CANONICAL_METRICS['pat']
+    if 'shipment' in cleaned or 'package' in cleaned or 'volume' in cleaned:
+        return CANONICAL_METRICS['express_shipments']
+    if 'gdp' in cleaned:
+        return CANONICAL_METRICS['gdp_growth']
+    if 'inflation' in cleaned or 'cpi' in cleaned:
+        return CANONICAL_METRICS['cpi_inflation']
+    if 'pincode' in cleaned or 'pin code' in cleaned:
+        return CANONICAL_METRICS['pin_codes_covered']
+
+    metric_id_safe = cleaned.replace(' ', '_').replace('-', '_')[:30]
+    return Metric(
+        metric_id=metric_id_safe,
+        name=metric_text,
+        category='General',
+        default_unit='units',
+        description=f'Extracted metric: {metric_text}',
+        synonyms=[metric_text]
+    )

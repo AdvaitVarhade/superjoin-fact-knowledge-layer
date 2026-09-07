@@ -1,33 +1,40 @@
 import re
 from typing import Tuple, Optional
 
-MULTIPLIERS = {
-    'lakh': 1e5,
-    'lacs': 1e5,
-    'lac': 1e5,
-    'crore': 1e7,
-    'crores': 1e7,
-    'cr': 1e7,
-    'million': 1e6,
-    'mn': 1e6,
-    'm': 1e6,
-    'billion': 1e9,
-    'bn': 1e9,
-    'b': 1e9,
-    'trillion': 1e12,
-    'thousand': 1e3,
-    'k': 1e3,
+CURRENCY_PATTERNS = {
+    'INR': [r'₹', r'rs\.?', r'inr', r'rupees?'],
+    'USD': [r'\$', r'usd', r'dollars?'],
+    'EUR': [r'€', r'eur', r'euros?'],
 }
 
-CURRENCY_PATTERNS = {
-    'INR': ['₹', 'rs.', 'rs', 'inr', 'rupees'],
-    'USD': ['$', 'usd', 'us dollars', 'dollars'],
-    'EUR': ['€', 'eur', 'euros'],
+MULTIPLIERS = {
+    'lakh': 1e5,
+    'lakhs': 1e5,
+    'lac': 1e5,
+    'lacs': 1e5,
+    'cr': 1e7,
+    'crore': 1e7,
+    'crores': 1e7,
+    'k': 1e3,
+    'thousand': 1e3,
+    'thousands': 1e3,
+    'm': 1e6,
+    'mn': 1e6,
+    'million': 1e6,
+    'millions': 1e6,
+    'b': 1e9,
+    'bn': 1e9,
+    'billion': 1e9,
+    'billions': 1e9,
+    't': 1e12,
+    'tn': 1e12,
+    'trillion': 1e12,
+    'trillions': 1e12,
 }
 
 def clean_number_string(text: str) -> str:
     cleaned = text.strip().replace(',', '')
-    paren_match = re.search(r'\(([\d\.]+)\)', cleaned)
+    paren_match = re.match(r'^\s*\(([\d\.]+)\)\s*$', cleaned)
     if paren_match:
         cleaned = f'-{paren_match.group(1)}'
     return cleaned

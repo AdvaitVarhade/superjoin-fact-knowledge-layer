@@ -1,10 +1,10 @@
-from typing import Optional
-from pydantic import BaseModel
+﻿from typing import Optional, List
+from pydantic import BaseModel, Field
 
 class Metric(BaseModel):
-    metric_id: str  # canonical ID, e.g., 'revenue', 'express_shipments', 'gdp_growth'
-    canonical_name: str
-    synonyms: list[str] = []
-    category: str = 'financial'  # 'financial', 'operational', 'macroeconomic'
-    default_unit: Optional[str] = None
+    metric_id: str
+    name: str
+    category: str = "Financial"  # Financial, Operational, Macroeconomic, Corporate
+    default_unit: str = "INR"
     description: Optional[str] = None
+    synonyms: List[str] = Field(default_factory=list)

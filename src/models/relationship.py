@@ -1,23 +1,27 @@
-from typing import Optional
+﻿from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
 from enum import Enum
-from pydantic import BaseModel
 
 class RelationType(str, Enum):
     CORROBORATION = "CORROBORATION"
     CONTRADICTION = "CONTRADICTION"
-    RECONCILED_SCOPE = "RECONCILED_SCOPE"
     RECONCILED_TEMPORAL = "RECONCILED_TEMPORAL"
-    RECONCILED_METHODOLOGY = "RECONCILED_METHODOLOGY"
-    UNKNOWN = "UNKNOWN"
+    RECONCILED_SCOPE = "RECONCILED_SCOPE"
+    RECONCILED_UNIT = "RECONCILED_UNIT"
+    RECONCILED_REVISION = "RECONCILED_REVISION"
+    EDGE_CASE_HANDLED = "EDGE_CASE_HANDLED"
 
 class Relationship(BaseModel):
-    relationship_id: str
-    fact_id_1: str
-    fact_id_2: str
+    relation_id: str
     relation_type: RelationType
-    delta: Optional[float] = None
+    source_fact_id: str
+    target_fact_id: str
+    source_document: str
+    target_document: str
+    metric_id: str
+    entity_id: str
+    delta_value: Optional[float] = None
     delta_percent: Optional[float] = None
-    explanation: str
     confidence: float = 1.0
-    human_verified: bool = False
-    resolution_notes: Optional[str] = None
+    reasoning: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
