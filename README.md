@@ -10,10 +10,10 @@ An evidence-first **Fact Knowledge Layer** that ingests PDF documents, extracts 
 
 ---
 
-## 📑 Specifications & Architecture Documentation
-- 📘 **[Software Requirements Specification (IEEE Std 830-1998 / ISO 29148)](file:///c:/d_drive/projects/Super%20Join/SRS.md)**: Full 7-section SRS including 9 Mermaid UML diagrams (Component, Use Case, Class, 3 Sequence diagrams, Activity Decision Tree, State Machine, and Deployment Topology).
-- 🔬 **[Deep Research & Technical Report](file:///c:/d_drive/projects/Super%20Join/deep-research-report.md)**: Deep dive into PDF grounding heuristics, normalization mathematics, and graph algorithms.
-- 🤖 **[Multi-Agent Audit Architecture](file:///c:/d_drive/projects/Super%20Join/src/agents/)**: Autonomous swarm (Lead Orchestrator, Scope Specialist, Forensic Math, Visual Critic).
+##  Specifications & Architecture Documentation
+-  **[Software Requirements Specification (IEEE Std 830-1998 / ISO 29148)](file:///c:/d_drive/projects/Super%20Join/SRS.md)**: Full 7-section SRS including 9 Mermaid UML diagrams (Component, Use Case, Class, 3 Sequence diagrams, Activity Decision Tree, State Machine, and Deployment Topology).
+-  **[Deep Research & Technical Report](file:///c:/d_drive/projects/Super%20Join/deep-research-report.md)**: Deep dive into PDF grounding heuristics, normalization mathematics, and graph algorithms.
+-  **[Multi-Agent Audit Architecture](file:///c:/d_drive/projects/Super%20Join/src/agents/)**: Autonomous swarm (Lead Orchestrator, Scope Specialist, Forensic Math, Visual Critic).
 
 ---
 
