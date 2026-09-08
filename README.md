@@ -5,6 +5,13 @@ An evidence-first **Fact Knowledge Layer** that ingests PDF documents, extracts 
 2. **Genuine Contradictions** (unreconciled conflicting estimates/figures across publishers)
 3. **Context-Reconciled Contradictions** (discrepancies explained by scope, temporal restatement, or units)
 4. **Handled Extraction/Reasoning Edge Cases** (accounting bracket losses, multi-year fiscal ranges)
+5. **Comprehensive IEEE 830 SRS Specification** ([SRS.md](file:///c:/d_drive/projects/Super%20Join/SRS.md)) featuring 9 Mermaid UML architecture diagrams.
+
+---
+
+## 📑 Specifications & Architecture Documentation
+- 📘 **[Software Requirements Specification (IEEE Std 830-1998 / ISO 29148)](file:///c:/d_drive/projects/Super%20Join/SRS.md)**: Full 7-section SRS including 9 Mermaid UML diagrams (Component, Use Case, Class, 3 Sequence diagrams, Activity Decision Tree, State Machine, and Deployment Topology).
+- 🔬 **[Deep Research & Technical Report](file:///c:/d_drive/projects/Super%20Join/deep-research-report.md)**: Deep dive into PDF grounding heuristics, normalization mathematics, and graph algorithms.
 
 ---
 
@@ -142,6 +149,9 @@ Super Join/
 │   ├── test_api.py       # Comprehensive FastAPI endpoint test suite
 │   ├── test_external_reports.py # Multi-company SEC & international report tests
 │   └── test_normalization.py   # Currency, scale, and period normalization tests
+├── docs/                 # Documentation & IEEE SRS specification
+│   └── SRS.md            # IEEE 830-compliant SRS with 9 UML diagrams
+├── SRS.md                # Root mirror of full IEEE SRS specification
 ├── starter-datasets/     # Delhivery & Indian Macroeconomy PDF filings
 ├── requirements.txt      # Minimal, pinned Python dependencies
 └── README.md             # Project documentation & run guide
