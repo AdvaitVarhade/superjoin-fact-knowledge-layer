@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,6 +12,7 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
@@ -19,24 +20,47 @@
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
+            paper: {
+              DEFAULT: 'var(--paper)',
+              card: 'var(--paper-card)',
+              subtle: 'var(--paper-subtle)',
+            },
+            rule: {
+              DEFAULT: 'var(--rule)',
+              subtle: 'var(--rule-subtle)',
+            },
+            ink: {
+              DEFAULT: 'var(--ink)',
+              muted: 'var(--ink-muted)',
+              subtle: 'var(--ink-subtle)',
+            },
+            accent: {
+              DEFAULT: 'var(--accent)',
+              hover: 'var(--accent-hover)',
+            },
+            status: {
+              pass: 'var(--pass)',
+              fail: 'var(--fail)',
+              boost: 'var(--boost)',
+            },
             app: {
-              bg: '#020408',
-              sidebar: '#04070D',
-              card: '#080E1A',
-              surface: '#0D1627',
-              border: '#111D30',
-              borderLight: '#1A2C4A',
-              teal: '#00D4B2',
-              tealGlow: '#00F0C8',
-              emerald: '#10B981',
-              amber: '#F59E0B',
-              coral: '#EF4444',
+              bg: 'var(--paper)',
+              sidebar: 'var(--paper-card)',
+              card: 'var(--paper-card)',
+              surface: 'var(--paper-subtle)',
+              border: 'var(--rule)',
+              borderLight: 'var(--rule-subtle)',
+              teal: 'var(--accent)',
+              tealGlow: 'var(--accent-hover)',
+              emerald: 'var(--pass)',
+              amber: 'var(--boost)',
+              coral: 'var(--fail)',
               purple: '#8B5CF6',
-              orange: '#F97316',
+              orange: '#D97706',
               blue: '#3B82F6',
-              text: '#F8FAFC',
-              muted: '#94A3B8',
-              dim: '#64748B'
+              text: 'var(--ink)',
+              muted: 'var(--ink-muted)',
+              dim: 'var(--ink-subtle)'
             }
           }
         }
@@ -44,9 +68,41 @@
     }
   </script>
   <style>
+    :root {
+      /* Light Mode Default */
+      --paper: #F6F5F2;
+      --paper-card: #FFFFFF;
+      --paper-subtle: #EBEAE5;
+      --rule: #D8D6CF;
+      --rule-subtle: #E2E0D8;
+      --ink: #1C1D20;
+      --ink-muted: #62656E;
+      --ink-subtle: #8A8E98;
+      --accent: #D97706;
+      --accent-hover: #B45309;
+      --pass: #2E7D52;
+      --fail: #C53030;
+      --boost: #D97706;
+    }
+    .dark {
+      /* Dark Mode Instrument */
+      --paper: #131417;
+      --paper-card: #181A1E;
+      --paper-subtle: #202227;
+      --rule: #2D3037;
+      --rule-subtle: #24272E;
+      --ink: #E6E4E1;
+      --ink-muted: #8E929B;
+      --ink-subtle: #5C6069;
+      --accent: #D97706;
+      --accent-hover: #F59E0B;
+      --pass: #3E9B66;
+      --fail: #D14343;
+      --boost: #E69A27;
+    }
     body {
-      background-color: #020408;
-      color: #F8FAFC;
+      background-color: var(--paper);
+      color: var(--ink);
       font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .custom-scroll::-webkit-scrollbar {
@@ -54,31 +110,31 @@
       height: 6px;
     }
     .custom-scroll::-webkit-scrollbar-track {
-      background: #020408;
+      background: var(--paper);
     }
     .custom-scroll::-webkit-scrollbar-thumb {
-      background: #111D30;
+      background: var(--rule);
       border-radius: 3px;
     }
     .custom-scroll::-webkit-scrollbar-thumb:hover {
-      background: #1A2C4A;
+      background: var(--rule-subtle);
     }
     .app-card {
-      background: #080E1A;
-      border: 1px solid #111D30;
+      background: var(--paper-card);
+      border: 1px solid var(--rule);
     }
     .app-card:hover {
-      border-color: #1A2C4A;
+      border-color: var(--rule-subtle);
     }
     .active-nav-pill {
-      background: rgba(0, 212, 178, 0.12);
-      border-color: rgba(0, 212, 178, 0.35);
-      color: #00D4B2 !important;
+      background: rgba(217, 119, 6, 0.15);
+      border-color: rgba(217, 119, 6, 0.45);
+      color: var(--accent) !important;
     }
     .active-workspace-pill {
-      background: #0D1627;
-      border-color: #1A2C4A;
-      color: #FFFFFF !important;
+      background: var(--paper-subtle);
+      border-color: var(--rule);
+      color: var(--ink) !important;
     }
     .graph-tooltip {
       position: absolute;
@@ -87,9 +143,9 @@
       z-index: 50;
     }
     .graph-node-highlight {
-      stroke: #00F0C8 !important;
+      stroke: #F59E0B !important;
       stroke-width: 3.5px !important;
-      filter: drop-shadow(0 0 10px rgba(0, 240, 200, 0.85)) !important;
+      filter: drop-shadow(0 0 10px rgba(217, 119, 6, 0.85)) !important;
     }
     .graph-node-dimmed {
       opacity: 0.15 !important;
@@ -135,6 +191,12 @@
           <span>Dashboard</span>
         </button>
 
+        <button onclick="switchTab('cases')" id="nav-btn-cases" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-semibold text-app-teal bg-app-teal/10 hover:bg-app-teal/20 border border-app-teal/40 transition cursor-pointer shadow-[0_0_14px_rgba(0,212,178,0.18)]">
+          <svg class="w-4 h-4 text-app-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+          <span class="flex-1 text-left">Reconciliation</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-mono bg-app-teal/20 text-app-teal border border-app-teal/40 font-bold">Featured</span>
+        </button>
+
         <button onclick="switchTab('documents')" id="nav-btn-documents" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           <span>Documents</span>
@@ -150,9 +212,10 @@
           <span>Knowledge Graph</span>
         </button>
 
-        <button onclick="switchTab('cases')" id="nav-btn-cases" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-          <span>Reconciliation</span>
+        <button onclick="switchTab('spreadsheet')" id="nav-btn-spreadsheet" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <span class="flex-1 text-left">Financial Grid</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">Live Model</span>
         </button>
 
         <button onclick="switchTab('query')" id="nav-btn-query" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
@@ -209,6 +272,13 @@
           </div>
           <span class="text-[10px] font-mono text-app-dim">59 facts</span>
         </button>
+        <button onclick="filterWorkspace('amazon')" id="ws-btn-amazon" class="w-full flex items-center justify-between px-3 py-1.5 rounded-md text-xs text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-2.5 h-2.5 rounded bg-yellow-500"></span>
+            <span>Amazon.com (10-K)</span>
+          </div>
+          <span class="text-[10px] font-mono text-app-dim" id="ws-amazon-count">140+ facts</span>
+        </button>
 
         <button onclick="switchTab('upload')" class="w-full flex items-center space-x-2 px-3 py-1.5 rounded-md text-xs text-app-dim hover:text-app-teal transition border border-dashed border-app-border mt-1 cursor-pointer">
           <span>+</span>
@@ -252,17 +322,24 @@
         </div>
         <input type="text" id="top-search-input" onkeyup="handleTopSearch(event)" placeholder="Search facts, companies, metrics, or documents..." class="w-full pl-9 pr-12 py-2 bg-app-card border border-app-border rounded-lg text-xs text-app-text placeholder-app-dim focus:outline-none focus:border-app-teal transition">
         <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-          <kbd class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-app-surface text-app-dim border border-app-border">⌘ K</kbd>
+          <kbd class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-app-surface text-app-dim border border-app-border">Ctrl K</kbd>
         </div>
       </div>
 
       <!-- Right Header Actions & Profile -->
       <div class="flex items-center space-x-3">
         <!-- AI Fact Copilot Header Action -->
-        <button id="btn-top-copilot" onclick="toggleCopilotDrawer()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-app-teal/15 to-teal-500/15 hover:from-app-teal/25 hover:to-teal-500/25 border border-app-teal/30 text-app-teal text-xs font-mono font-bold transition cursor-pointer shadow-sm">
-          <span>✨</span>
-          <span>AI Copilot</span>
-          <kbd class="text-[9px] px-1 py-0.2 rounded bg-app-bg text-app-teal/80 border border-app-teal/20">⌘ J</kbd>
+        <!-- Live Automated Walkthrough Play / Pause Toggle Button -->
+        <button id="btn-top-tour" onclick="toggleTourAutoplay()" title="Play / Pause Automated Feature Walkthrough" class="w-9 h-9 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/35 hover:to-orange-500/35 border border-amber-500/40 text-amber-400 hover:text-amber-300 transition cursor-pointer shadow-sm flex items-center justify-center">
+          <span id="top-tour-icon" class="flex items-center justify-center">
+            <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          </span>
+        </button>
+
+        <!-- Certified Audit Dossier Export -->
+        <button id="btn-top-dossier" onclick="openAuditDossier()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-app-surface/80 hover:bg-app-border border border-app-border text-slate-200 text-xs font-mono font-medium transition cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-blue-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+          <span>Audit Dossier</span>
         </button>
 
         <!-- Notification Bell -->
@@ -307,13 +384,13 @@
           <div class="flex items-center space-x-3">
             <!-- Period Selector -->
             <button id="btn-period-select" onclick="cyclePeriod()" class="px-3 py-2 rounded-lg bg-app-card border border-app-border text-xs text-app-text hover:border-app-borderLight font-medium flex items-center space-x-2 transition cursor-pointer">
-              <span>📅</span>
+              <svg class="w-3.5 h-3.5 text-app-dim inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               <span id="label-active-period">FY21 - FY24</span>
               <svg class="w-3 h-3 text-app-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
 
             <!-- Upload Documents CTA -->
-            <button onclick="switchTab('upload')" id="btn-dash-upload" class="px-4 py-2 rounded-lg bg-gradient-to-r from-app-teal to-teal-500 hover:from-teal-400 hover:to-app-teal text-slate-950 font-bold text-xs shadow-lg shadow-app-teal/20 flex items-center space-x-1.5 transition cursor-pointer">
+            <button onclick="switchTab('upload')" id="btn-dash-upload" class="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover text-slate-950 font-bold text-xs shadow-lg shadow-accent/20 flex items-center space-x-1.5 transition cursor-pointer">
               <span>+</span>
               <span>Upload Documents</span>
             </button>
@@ -402,7 +479,7 @@
             <!-- Metadata Footer -->
             <div id="chart1-footer" class="pt-3 border-t border-app-border text-[11px] font-mono text-app-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
               <span>Source: Delhivery Annual Reports FY21-FY24 (Pages 34, 48, 112)</span>
-              <span class="text-app-teal font-semibold">✓ Verified by 3 Core Auditors</span>
+              <span class="text-app-teal font-semibold flex items-center space-x-1.5"><svg class="w-3.5 h-3.5 text-app-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><span>Verified by 3 Core Auditors</span></span>
             </div>
           </div>
 
@@ -533,7 +610,7 @@
 
             <div class="space-y-3 font-mono text-xs">
               <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('facts')">
-                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">✓</span>
+                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5"><svg class="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <div class="flex-1 min-w-0">
                   <div class="text-white text-[11px] truncate">Ingested Apple FY23 10-K</div>
                   <div class="text-[10px] text-app-dim">208 facts extracted • 10m ago</div>
@@ -541,7 +618,7 @@
               </div>
 
               <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('cases')">
-                <span class="w-5 h-5 rounded-full bg-app-teal/15 text-app-teal border border-app-teal/30 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">⚡</span>
+                <span class="w-5 h-5 rounded-full bg-app-teal/15 text-app-teal border border-app-teal/30 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5"><svg class="w-3 h-3 text-app-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
                 <div class="flex-1 min-w-0">
                   <div class="text-white text-[11px] truncate">Corroborated GDP FY24 (RBI vs IMF)</div>
                   <div class="text-[10px] text-app-dim">7.2% vs 7.0% • 45m ago</div>
@@ -549,7 +626,7 @@
               </div>
 
               <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('cases')">
-                <span class="w-5 h-5 rounded-full bg-amber-950 text-amber-400 border border-amber-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">⚠️</span>
+                <span class="w-5 h-5 rounded-full bg-amber-950 text-amber-400 border border-amber-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5"><svg class="w-3 h-3 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></span>
                 <div class="flex-1 min-w-0">
                   <div class="text-white text-[11px] truncate">Detected Revenue Contradiction</div>
                   <div class="text-[10px] text-app-dim">Consol vs Standalone • 2h ago</div>
@@ -557,7 +634,7 @@
               </div>
 
               <div class="flex items-start space-x-2.5 cursor-pointer hover:bg-app-surface/50 p-1 rounded transition" onclick="switchTab('facts')">
-                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">✓</span>
+                <span class="w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5"><svg class="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
                 <div class="flex-1 min-w-0">
                   <div class="text-white text-[11px] truncate">Ingested Tesla FY23 10-K</div>
                   <div class="text-[10px] text-app-dim">194 facts extracted • 3h ago</div>
@@ -583,7 +660,7 @@
             <h2 class="text-xl font-bold text-white">Indexed Documents</h2>
             <p class="text-xs text-app-muted mt-1">Multi-entity corporate filings, annual reports, and macroeconomic releases parsed into grounded knowledge.</p>
           </div>
-          <button onclick="switchTab('upload')" id="btn-docs-upload" class="px-4 py-2 rounded-lg bg-app-teal text-slate-950 font-bold text-xs hover:bg-teal-400 transition cursor-pointer">
+          <button onclick="switchTab('upload')" id="btn-docs-upload" class="px-4 py-2 rounded-lg bg-accent text-slate-950 font-bold text-xs hover:bg-accent-hover transition cursor-pointer">
             + Upload New Document
           </button>
         </div>
@@ -620,11 +697,13 @@
             <p class="text-xs text-app-muted mt-1">Search, filter, and inspect canonical verified financial facts with exact bounding box citations.</p>
           </div>
           <div class="flex items-center space-x-2">
-            <button onclick="exportFactsCSV()" id="btn-export-facts-csv" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer">
-              ⬇️ Export CSV
+            <button onclick="exportFactsCSV()" id="btn-export-facts-csv" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 inline text-app-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>Export CSV</span>
             </button>
-            <button onclick="exportFactsJSON()" id="btn-export-facts-json" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer">
-              ⬇️ Export JSON
+            <button onclick="exportFactsJSON()" id="btn-export-facts-json" class="px-3 py-1.5 text-xs font-mono rounded bg-app-card border border-app-border text-app-teal hover:border-app-teal transition cursor-pointer flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 inline text-app-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>Export JSON</span>
             </button>
           </div>
         </div>
@@ -638,6 +717,7 @@
               <option value="delhivery">Delhivery</option>
               <option value="apple">Apple Inc.</option>
               <option value="tesla">Tesla Inc.</option>
+              <option value="amazon">Amazon.com, Inc.</option>
               <option value="india_macro">India Macro</option>
             </select>
           </div>
@@ -655,7 +735,7 @@
           </div>
           <div class="lg:col-span-2">
             <label class="text-app-dim text-[10px] block mb-1">Search Text / Value</label>
-            <input type="text" id="filter-fact-search" oninput="filterFactsList()" placeholder="Filter facts by value, document, or snippet..." class="w-full bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
+            <input type="text" id="filter-fact-search" oninput="debouncedFilterFactsList()" placeholder="Filter facts by value, document, or snippet..." class="w-full bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
           </div>
         </div>
 
@@ -670,13 +750,29 @@
                   <th class="p-3">Period</th>
                   <th class="p-3">Value</th>
                   <th class="p-3">Source & Location</th>
-                  <th class="p-3 text-right">Provenance</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="facts-table-body" class="divide-y divide-app-border/60">
                 <!-- Injected via JS -->
               </tbody>
             </table>
+          </div>
+          <!-- Pagination Bar -->
+          <div class="px-4 py-3 bg-app-surface/60 border-t border-app-border flex items-center justify-between text-xs font-mono">
+            <span id="facts-pagination-info" class="text-app-muted text-[11px]">Showing 1-50 of 746 facts</span>
+            <div class="flex items-center space-x-2">
+              <button id="btn-facts-prev" onclick="changeFactsPage(-1)" class="px-3 py-1 rounded bg-app-card hover:bg-app-surface border border-app-border text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer text-[11px]">
+                ← Prev
+              </button>
+              <span id="facts-page-indicator" class="px-2 py-0.5 rounded bg-app-bg border border-app-border text-app-teal font-bold text-[11px]">
+                Page 1 of 15
+              </span>
+              <button id="btn-facts-next" onclick="changeFactsPage(1)" class="px-3 py-1 rounded bg-app-card hover:bg-app-surface border border-app-border text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition cursor-pointer text-[11px]">
+                Next →
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -690,7 +786,7 @@
           <p class="text-xs text-app-muted mt-1">Deterministic automated resolution of multi-source contradictions, definitions, entity hierarchies, and macroeconomic discrepancies.</p>
         </div>
 
-        <div id="cases-container" class="space-y-4">
+        <div id="cases-container" class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <!-- Injected via JS -->
         </div>
       </div>
@@ -745,7 +841,7 @@
             <!-- Left: High Risk Anomaly Items -->
             <div class="space-y-2">
               <div class="text-[11px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
-                <span class="text-red-400">🚩</span> <span>High-Risk Discrepancy Findings</span>
+                <span class="text-red-400 flex items-center space-x-1.5"><svg class="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg><span>High-Risk Discrepancy Findings</span></span>
               </div>
               <div id="scorecard-high-risk-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-1">
                 <div class="p-2 rounded bg-red-950/20 border border-red-900/50 flex items-start justify-between">
@@ -761,7 +857,7 @@
             <!-- Right: Remediation Checklist -->
             <div class="space-y-2">
               <div class="text-[11px] font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
-                <span class="text-app-teal">📋</span> <span>Audit Verification Rules Checklist</span>
+                <span class="text-app-teal flex items-center space-x-1.5"><svg class="w-4 h-4 text-app-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg><span>Audit Verification Rules Checklist</span></span>
               </div>
               <div id="scorecard-checklist" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-1">
                 <div class="p-2 rounded bg-app-surface/60 border border-app-border flex items-center justify-between">
@@ -814,7 +910,7 @@
                 <label class="text-[11px] font-mono text-app-muted block mb-1">Free-Text Keyword (Optional)</label>
                 <input type="text" id="query-free-text" placeholder="e.g. 8141, 391, consolidated, standalone" class="w-full text-xs font-mono bg-app-surface border border-app-border rounded-lg p-2 text-white outline-none focus:border-app-teal">
               </div>
-              <button onclick="runAuditQuery()" id="btn-execute-query" class="w-full py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-mono font-bold text-xs rounded-lg transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-app-teal/20">
+              <button onclick="runAuditQuery()" id="btn-execute-query" class="w-full py-2.5 bg-accent hover:bg-accent-hover text-slate-950 font-mono font-bold text-xs rounded-lg transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-accent/20">
                 <span>Execute Verification Query</span>
               </button>
             </div>
@@ -823,19 +919,19 @@
               <div class="text-[11px] font-mono text-app-muted mb-2">Preset Verification Scenarios:</div>
               <div class="space-y-1.5">
                 <button onclick="setQueryPreset('delhivery', 'revenue', 'FY24', '')" id="preset-delhivery-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
-                  ⚡ Delhivery FY24 Revenue (Consol vs Standalone)
+                  Delhivery FY24 Revenue (Consol vs Standalone)
                 </button>
                 <button onclick="setQueryPreset('apple', 'revenue', 'FY24', '')" id="preset-apple-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
-                  🍎 Apple FY24 Net Sales ($391.0B 10-K)
+                  Apple FY24 Net Sales ($391.0B 10-K)
                 </button>
                 <button onclick="setQueryPreset('tesla', 'revenue', 'FY24', '')" id="preset-tesla-rev" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
-                  ⚡ Tesla FY24 Total Revenues ($97.7B Deck)
+                  Tesla FY24 Total Revenues ($97.7B Deck)
                 </button>
                 <button onclick="setQueryPreset('delhivery', 'express_shipments', 'FY24', '')" id="preset-delhivery-vol" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
-                  ⚡ Delhivery FY24 Express Shipments Volume
+                  Delhivery FY24 Express Shipments Volume
                 </button>
                 <button onclick="setQueryPreset('india_macro', 'cpi_inflation', 'FY25', '')" id="preset-macro-cpi" class="w-full text-left text-[11px] font-mono p-2 rounded bg-app-surface hover:bg-app-border text-app-text truncate cursor-pointer">
-                  🏛️ India FY25 CPI Inflation (Eco Survey vs IMF)
+                  India FY25 CPI Inflation (Eco Survey vs IMF)
                 </button>
               </div>
             </div>
@@ -849,8 +945,9 @@
                   <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Audit Response & Provenance Trace</h3>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <button onclick="exportActiveQueryCSV()" id="btn-export-query" class="hidden px-2 py-0.5 text-[10px] font-mono rounded bg-app-surface border border-app-teal/40 text-app-teal hover:bg-app-teal/10 transition cursor-pointer">
-                    ⬇️ Export CSV
+                  <button onclick="exportActiveQueryCSV()" id="btn-export-query" class="hidden px-2 py-0.5 text-[10px] font-mono rounded bg-app-surface border border-app-teal/40 text-app-teal hover:bg-app-teal/10 transition cursor-pointer flex items-center space-x-1">
+                    <svg class="w-3 h-3 inline text-app-teal" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Export CSV</span>
                   </button>
                   <span id="query-status" class="text-[10px] font-mono text-app-teal bg-app-teal/10 px-2 py-0.5 rounded border border-app-teal/30">READY</span>
                 </div>
@@ -892,7 +989,7 @@
               </div>
 
               <input type="file" id="pdfFileInput" accept=".pdf" class="hidden" onchange="handleFileSelected(event)">
-              <label for="pdfFileInput" id="btn-browse-pdf" class="cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-mono font-bold text-xs rounded-lg transition shadow-lg shadow-app-teal/20">
+              <label for="pdfFileInput" id="btn-browse-pdf" class="cursor-pointer inline-flex items-center space-x-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-slate-950 font-mono font-bold text-xs rounded-lg transition shadow-lg shadow-accent/20">
                 <span>Browse PDF File...</span>
               </label>
               <div id="selectedFileName" class="text-xs font-mono text-app-teal truncate max-w-full px-2"></div>
@@ -908,7 +1005,7 @@
                   <option value="150">150 Pages (Full Filing)</option>
                 </select>
               </div>
-              <button id="uploadSubmitBtn" onclick="submitPdfUpload()" class="w-full py-2.5 bg-app-surface hover:bg-app-teal hover:text-slate-950 border border-app-border text-app-text font-mono font-bold text-xs rounded-lg transition cursor-pointer">
+              <button id="uploadSubmitBtn" onclick="submitPdfUpload()" class="w-full py-2.5 bg-app-surface hover:bg-accent hover:text-slate-950 border border-app-border text-app-text font-mono font-bold text-xs rounded-lg transition cursor-pointer">
                 Process & Extract Facts
               </button>
               <div id="uploadStatusMsg" class="text-xs font-mono text-center min-h-[20px]"></div>
@@ -970,7 +1067,7 @@
             <div class="flex items-center space-x-2">
               <div class="relative w-64">
                 <input type="text" id="graph-search-input" oninput="handleGraphSearch(event)" placeholder="Search node, metric, or value..." class="w-full pl-7 pr-3 py-1.5 bg-app-surface border border-app-border rounded-lg text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-app-teal transition">
-                <span class="absolute left-2.5 top-2 text-app-dim text-xs">🔍</span>
+                <span class="absolute left-2.5 top-2 text-app-dim"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
               </div>
             </div>
           </div>
@@ -984,6 +1081,7 @@
               <button onclick="filterGraphEntity('delhivery')" id="gfilter-delhivery" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Delhivery</button>
               <button onclick="filterGraphEntity('apple')" id="gfilter-apple" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Apple Inc.</button>
               <button onclick="filterGraphEntity('tesla')" id="gfilter-tesla" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Tesla Inc.</button>
+              <button onclick="filterGraphEntity('amazon')" id="gfilter-amazon" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">Amazon.com</button>
               <button onclick="filterGraphEntity('india_macro')" id="gfilter-india_macro" class="px-2.5 py-1 rounded text-[11px] font-mono text-app-muted hover:text-white bg-app-surface/60 border border-transparent cursor-pointer">India Macro</button>
             </div>
 
@@ -1003,7 +1101,7 @@
               <button onclick="setGraphLayoutMode('force')" id="glayout-force" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-teal/15 text-app-teal border border-app-teal/30 cursor-pointer font-bold">Network</button>
               <button onclick="setGraphLayoutMode('radial')" id="glayout-radial" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">Radial</button>
               <button onclick="setGraphLayoutMode('cluster')" id="glayout-cluster" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">Category</button>
-              <button onclick="setGraphLayoutMode('timeline')" id="glayout-timeline" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">⏱️ Timeline</button>
+              <button onclick="setGraphLayoutMode('timeline')" id="glayout-timeline" class="px-2 py-0.5 rounded text-[10px] font-mono text-app-muted hover:text-white bg-app-surface/40 border border-transparent cursor-pointer">Timeline</button>
             </div>
           </div>
         </div>
@@ -1049,7 +1147,7 @@
                 </button>
                 <div class="w-px h-4 bg-app-border mx-0.5"></div>
                 <button onclick="toggleSimulationPhysics()" id="btn-gsim-toggle" class="px-2 py-1 bg-app-surface text-app-teal rounded text-[10px] cursor-pointer" title="Pause / Resume Force Simulation">
-                  ⏸ Pause
+                  Pause
                 </button>
                 <button onclick="toggleNodeLabels()" id="btn-glabels-toggle" class="px-2 py-1 hover:bg-app-surface text-app-muted hover:text-white rounded text-[10px] cursor-pointer" title="Toggle Label Density">
                   Labels: Hubs
@@ -1117,7 +1215,7 @@
               <!-- Inspector Body Container -->
               <div id="inspector-body" class="text-xs space-y-3 font-mono text-app-text">
                 <div class="p-4 rounded-xl bg-app-surface/40 border border-app-border text-center text-app-muted text-xs space-y-2">
-                  <div class="text-2xl">🕸️</div>
+                  <div class="w-8 h-8 mx-auto text-app-teal"><svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></div>
                   <div class="font-bold text-white">Interactive Graph Explorer</div>
                   <p class="text-[11px] text-app-dim leading-relaxed">
                     Click any Document Hub, Fact Node, or Reconciliation Edge to inspect multi-source provenance, audit reasoning, or jump directly into the Canvas Studio.
@@ -1125,7 +1223,7 @@
                 </div>
 
                 <div class="p-3 rounded-lg bg-app-surface/20 border border-app-border/60 text-[11px] text-app-dim space-y-1.5">
-                  <div class="text-white font-bold">💡 Quick Shortcuts</div>
+                  <div class="text-white font-bold flex items-center space-x-1.5"><svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span>Quick Shortcuts</span></div>
                   <div>• <b class="text-app-text">Hover</b> over a node to focus its 1-hop connected subgraph.</div>
                   <div>• <b class="text-app-text">Drag</b> nodes to custom positions with live physics.</div>
                   <div>• <b class="text-app-text">Search</b> above to locate any metric in real time.</div>
@@ -1172,28 +1270,28 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
             <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-white flex items-center space-x-1"><span>🎯</span> <span>Orchestrator</span></span>
+                <span class="font-bold text-white flex items-center space-x-1"><svg class="w-3.5 h-3.5 text-blue-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> <span>Orchestrator</span></span>
                 <span class="w-2 h-2 rounded-full bg-blue-500"></span>
               </div>
               <p class="text-[10px] text-app-dim">Goal planning & subagent task dispatch.</p>
             </div>
             <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-app-teal flex items-center space-x-1"><span>📜</span> <span>Scope Auditor</span></span>
+                <span class="font-bold text-app-teal flex items-center space-x-1"><svg class="w-3.5 h-3.5 text-app-teal inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> <span>Scope Auditor</span></span>
                 <span class="w-2 h-2 rounded-full bg-app-teal"></span>
               </div>
               <p class="text-[10px] text-app-dim">Ind AS 110 Standalone vs Consol perimeter.</p>
             </div>
             <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-amber-400 flex items-center space-x-1"><span>🔢</span> <span>Forensic Math</span></span>
+                <span class="font-bold text-amber-400 flex items-center space-x-1"><svg class="w-3.5 h-3.5 text-amber-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v10"/><path d="M6 9l2-2"/><path d="M14 7h4v4h-4v6h4"/></svg> <span>Forensic Math</span></span>
                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
               </div>
               <p class="text-[10px] text-app-dim">EBITDA bridge, margins, & ratio sanity.</p>
             </div>
             <div class="p-3 rounded-lg bg-app-surface/60 border border-purple-900/40 bg-purple-950/20 space-y-1">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-purple-300 flex items-center space-x-1"><span>🛡️</span> <span>Visual Critic</span></span>
+                <span class="font-bold text-purple-300 flex items-center space-x-1"><svg class="w-3.5 h-3.5 text-purple-300 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> <span>Visual Critic</span></span>
                 <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
               </div>
               <p class="text-[10px] text-purple-300/80">Zero-hallucination BBox verification.</p>
@@ -1211,7 +1309,7 @@
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="text" id="agent-mission-input" placeholder="e.g. Audit Delhivery FY24 EBITDA to Net Loss bridge and reconcile adjustments..." class="flex-1 px-4 py-2.5 bg-app-surface border border-app-border rounded-lg text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-purple-500 transition">
             <button onclick="dispatchAgentMission()" id="btn-dispatch-mission" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-mono font-bold text-xs rounded-lg transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-purple-600/30">
-              <span>🚀 Dispatch Swarm</span>
+              <span class="flex items-center space-x-1.5"><svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg><span>Dispatch Swarm</span></span>
             </button>
           </div>
 
@@ -1219,16 +1317,19 @@
           <div class="pt-2 flex flex-wrap items-center gap-1.5 text-xs font-mono">
             <span class="text-app-dim text-[11px] mr-1">Preset Missions:</span>
             <button onclick="setAgentPreset('Audit Delhivery FY24 EBITDA to Net Loss bridge and reconcile non-cash adjustments')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
-              ⚡ EBITDA Bridge (FY24)
+              EBITDA Bridge (FY24)
             </button>
             <button onclick="setAgentPreset('Reconcile Delhivery Standalone vs Consolidated FY24 revenue scope variance per Note 34')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
-              📜 Scope Reconciliation (Note 34)
+              Scope Reconciliation (Note 34)
             </button>
             <button onclick="setAgentPreset('Audit macroeconomic CPI inflation spread between Economic Survey and IMF Article IV report')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
-              🏛️ Macro CPI Inflation Spread
+              Macro CPI Inflation Spread
             </button>
             <button onclick="setAgentPreset('Corroborate Delhivery FY24 Express Parcel Volume across Annual Report and Investor Presentation')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
-              📦 Express Parcel Volume Check
+              Express Parcel Volume Check
+            </button>
+            <button onclick="setAgentPreset('Audit Amazon Net Sales, AWS Segment Growth, and Operating Income across 2023 and 2024 Form 10-K filings')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 cursor-pointer transition">
+              Amazon 10-K Cross-Year Audit
             </button>
           </div>
         </div>
@@ -1253,7 +1354,7 @@
             <!-- Trace Stream Scrollable Area -->
             <div id="agent-trace-stream" class="flex-1 overflow-y-auto custom-scroll space-y-2.5 pr-1 font-mono text-xs">
               <div class="p-8 text-center text-app-dim space-y-2">
-                <div class="text-3xl">🤖</div>
+                <div class="w-10 h-10 mx-auto text-purple-400"><svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="12" x="3" y="6" rx="2"/><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M12 2v4"/></svg></div>
                 <div class="text-white font-bold">Multi-Agent Swarm Ready</div>
                 <p class="text-[11px] max-w-md mx-auto">Select a preset mission above or enter a custom audit goal to watch the Lead Orchestrator, Scope Auditor, Forensic Math, and Critic agents collaborate live.</p>
               </div>
@@ -1269,7 +1370,7 @@
               </div>
               <div class="flex items-center space-x-2">
                 <button onclick="copyAgentMemo()" id="btn-copy-memo" class="hidden px-2 py-0.5 text-[10px] font-mono rounded bg-app-surface border border-purple-500/40 text-purple-300 hover:bg-purple-500/10 transition cursor-pointer">
-                  📋 Copy
+                  Copy
                 </button>
                 <span id="agent-memo-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-surface text-app-dim border border-app-border">AWAITING</span>
               </div>
@@ -1278,7 +1379,7 @@
             <!-- Rendered Memo Area -->
             <div id="agent-memo-container" class="space-y-4 font-mono text-xs">
               <div class="p-8 text-center text-app-dim space-y-2">
-                <div class="text-3xl">📜</div>
+                <div class="w-10 h-10 mx-auto text-app-dim"><svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg></div>
                 <div class="text-white font-bold">No Active Audit Memorandum</div>
                 <p class="text-[11px]">The synthesized audit memo, critic verification sign-off, and clickable evidence citations will render here upon mission completion.</p>
               </div>
@@ -1286,6 +1387,124 @@
           </div>
 
         </div>
+      </div>
+
+          <!-- ========================================== -->
+      <!-- VIEW: SUPERJOIN FINANCIAL SPREADSHEET GRID -->
+      <!-- ========================================== -->
+      <div id="view-spreadsheet" class="space-y-4 hidden">
+        
+        <!-- Header Controls & Entity Selector -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-app-card border border-app-border p-4 rounded-xl">
+          <div>
+            <div class="flex items-center space-x-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h2 class="text-xl font-extrabold text-white tracking-tight">Superjoin Financial Spreadsheet Grid</h2>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold">CELL-TO-BBOX GROUNDED</span>
+            </div>
+            <p class="text-xs text-app-muted mt-1">Live interconnected financial models with deterministic bounding-box provenance and dynamic formula resolution.</p>
+          </div>
+
+          <div class="flex items-center space-x-2.5">
+            <!-- Entity Switcher Dropdown -->
+            <div class="flex items-center space-x-2">
+              <span class="text-[11px] font-mono text-app-dim uppercase">Entity:</span>
+              <select id="spreadsheet-entity-select" onchange="onSpreadsheetEntityChange(this.value)" class="bg-app-surface border border-app-border text-white text-xs font-mono rounded-lg px-3 py-1.5 focus:outline-none focus:border-app-teal cursor-pointer">
+                <option value="delhivery">Delhivery Limited (Ind AS ₹ Cr)</option>
+                <option value="amazon">Amazon.com, Inc. (10-K $M)</option>
+                <option value="apple">Apple Inc. (10-K $M)</option>
+                <option value="tesla">Tesla, Inc. (10-K $M)</option>
+                <option value="india_macro">Indian Macroeconomy (RBI/MoSPI)</option>
+              </select>
+            </div>
+
+            <button onclick="openAuditDossier(currentSpreadsheetEntity)" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 text-xs font-mono rounded-lg transition flex items-center space-x-1.5 cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <span>Export Dossier</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Formula Bar HUD -->
+        <div class="bg-app-surface border border-app-border rounded-xl p-2.5 flex items-center space-x-3 font-mono text-xs">
+          <!-- Active Cell Indicator -->
+          <div class="flex items-center space-x-1.5 px-3 py-1 bg-app-card border border-app-border rounded-lg text-app-teal font-bold text-xs min-w-[70px] justify-center">
+            <span id="grid-active-cell-id">B1</span>
+          </div>
+
+          <!-- Function Symbol -->
+          <div class="text-app-dim font-serif italic text-sm font-bold select-none px-1">
+            fx
+          </div>
+
+          <!-- Formula / Raw Value Display & Input -->
+          <div class="flex-1 bg-app-card border border-app-border focus-within:border-app-teal rounded-lg px-3 py-1 text-slate-200 flex items-center">
+            <input type="text" id="grid-formula-bar" placeholder="Select a cell to view / edit formula or value..." class="w-full bg-transparent text-emerald-400 font-mono text-xs font-medium focus:outline-none placeholder-app-dim" onkeydown="handleFormulaBarKey(event)" onblur="commitFormulaBarEdit()">
+          </div>
+
+          <!-- Status Indicator Pill -->
+          <div id="grid-cell-status-pill" class="px-2.5 py-1 rounded-md text-[10px] font-mono bg-emerald-950/60 text-emerald-400 border border-emerald-800 flex items-center space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span id="grid-cell-status-text">GROUNDED IN PDF (100%)</span>
+          </div>
+        </div>
+
+        <!-- Main Spreadsheet Split Layout: Grid + Evidence Dock -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          
+          <!-- Left / Center: Interactive Spreadsheet Grid (8 cols on desktop) -->
+          <div class="lg:col-span-8 app-card rounded-xl flex flex-col h-[620px] overflow-hidden shadow-2xl border border-app-border">
+            
+            <!-- Sheet Tab Navigation Bar (Top of Grid) -->
+            <div id="grid-sheet-tabs" class="flex items-center space-x-1 px-3 py-2 bg-app-surface/90 border-b border-app-border overflow-x-auto custom-scroll flex-shrink-0">
+              <!-- Dynamically populated sheet buttons -->
+            </div>
+
+            <!-- Scrollable Excel Grid Container -->
+            <div id="grid-table-container" class="flex-1 overflow-auto custom-scroll bg-[#030712] relative">
+              <table id="spreadsheet-table" class="w-full border-collapse font-mono text-xs text-slate-200 select-none">
+                <!-- Dynamically rendered table headers & rows -->
+              </table>
+            </div>
+
+            <!-- Spreadsheet Grid Bottom Status Bar -->
+            <div class="px-4 py-2 bg-app-surface/90 border-t border-app-border flex items-center justify-between text-[11px] font-mono text-app-dim">
+              <div class="flex items-center space-x-3">
+                <span class="flex items-center space-x-1 text-emerald-400">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Interactive Calculation Engine Active</span>
+                </span>
+                <span>•</span>
+                <span id="grid-sheet-info">Sheet: Income Statement</span>
+              </div>
+              <div class="text-app-muted">
+                Click any cell to inspect exact source PDF grounding
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right: Live Cell Evidence & Provenance Dock (4 cols) -->
+          <div class="lg:col-span-4 app-card rounded-xl p-4 flex flex-col h-[620px] overflow-y-auto custom-scroll shadow-2xl border border-app-border space-y-4">
+            
+            <!-- Dock Header -->
+            <div class="flex items-center justify-between border-b border-app-border pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-app-teal animate-pulse"></span>
+                <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Cell Evidence Inspector</h3>
+              </div>
+              <span id="dock-cell-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-surface text-app-teal border border-app-teal/30">Cell B1</span>
+            </div>
+
+            <!-- Dynamic Cell Evidence Details Container -->
+            <div id="dock-evidence-content" class="space-y-3.5 font-mono text-xs">
+              <!-- Dynamically filled by selectSpreadsheetCell -->
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
 
     </main>
@@ -1305,7 +1524,7 @@
           <span id="modal-doc-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-bg text-app-teal border border-app-teal/30 truncate max-w-xs">Document</span>
           <span id="modal-fact-id" class="text-xs font-mono text-app-muted hidden sm:inline"></span>
         </div>
-        <button onclick="closeModal()" id="btn-close-modal-x" class="text-app-muted hover:text-white font-mono text-base px-2.5 py-1 rounded hover:bg-app-surface transition cursor-pointer" title="Close Canvas">✕</button>
+        <button onclick="closeModal()" id="btn-close-modal-x" class="text-app-muted hover:text-white px-2 py-1 rounded hover:bg-app-surface transition cursor-pointer flex items-center justify-center" title="Close Canvas"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button>
       </div>
 
       <!-- Modal Split Layout -->
@@ -1315,18 +1534,18 @@
           <div class="w-full flex items-center justify-between pb-3 text-xs font-mono text-app-muted border-b border-app-border/50 mb-3">
             <div class="flex items-center space-x-2">
               <button onclick="changeModalPage(-1)" id="btn-prev-page" class="px-2.5 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition flex items-center space-x-1 cursor-pointer">
-                <span>◀</span> <span>Prev</span>
+                <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> <span>Prev</span>
               </button>
               <span id="modal-page-indicator" class="px-3 py-1 bg-app-bg rounded border border-app-border text-app-teal font-bold">Page 1 / 1</span>
               <button onclick="changeModalPage(1)" id="btn-next-page" class="px-2.5 py-1 bg-app-surface hover:bg-app-border text-app-text rounded transition flex items-center space-x-1 cursor-pointer">
-                <span>Next</span> <span>▶</span>
+                <span>Next</span> <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             </div>
             
             <!-- In-Canvas Keyword Search Bar -->
             <div class="flex items-center space-x-1.5 bg-app-bg px-2.5 py-1 rounded-lg border border-app-border">
               <input type="text" id="canvas-keyword-search" placeholder="Search in page..." onkeyup="if(event.key==='Enter') searchInCanvasPage()" class="w-24 sm:w-32 text-[11px] font-mono bg-transparent text-white outline-none placeholder-app-dim">
-              <button onclick="searchInCanvasPage()" id="btn-canvas-search" class="text-[10px] text-app-teal hover:text-teal-300 font-mono cursor-pointer" title="Find in page">🔍</button>
+              <button onclick="searchInCanvasPage()" id="btn-canvas-search" class="text-[10px] text-app-teal hover:text-teal-300 font-mono cursor-pointer" title="Find in page"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
               <span id="canvas-search-matches" class="text-[9px] text-app-teal font-mono hidden">0 hits</span>
             </div>
 
@@ -1385,10 +1604,10 @@
           <div class="pt-4 border-t border-app-border space-y-2">
             <div class="flex space-x-2">
               <button onclick="copyCitationJson()" id="btn-copy-citation" class="flex-1 px-3 py-2 bg-app-surface hover:bg-app-border border border-app-border hover:border-app-teal text-white text-xs font-mono rounded-lg transition flex items-center justify-center space-x-1 cursor-pointer">
-                <span>📋</span> <span>Copy Citation</span>
+                <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> <span>Copy Citation</span>
               </button>
               <button onclick="jumpToGraphFromModal()" id="btn-modal-to-graph" class="flex-1 px-3 py-2 bg-app-teal/15 hover:bg-app-teal/25 border border-app-teal/40 text-app-teal text-xs font-mono rounded-lg transition flex items-center justify-center space-x-1 cursor-pointer">
-                <span>🕸️</span> <span>View in Graph</span>
+                <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> <span>View in Graph</span>
               </button>
             </div>
             <button onclick="closeModal()" id="btn-close-modal-bottom" class="w-full py-1.5 bg-app-surface hover:bg-app-border text-app-muted hover:text-white text-xs font-mono rounded-lg transition cursor-pointer">
@@ -1417,9 +1636,9 @@
         </div>
         <div class="flex items-center space-x-2">
           <button onclick="copyDualComparisonJson()" id="btn-copy-dual-json" class="px-3 py-1 bg-app-surface hover:bg-app-border border border-app-border text-white text-xs font-mono rounded-lg transition flex items-center space-x-1 cursor-pointer">
-            <span>📋</span> <span>Copy Comparison JSON</span>
+            <svg class="w-3.5 h-3.5 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> <span>Copy Comparison JSON</span>
           </button>
-          <button onclick="closeDualModal()" id="btn-close-dual-x" class="text-app-muted hover:text-white font-mono text-base px-2.5 py-1 rounded hover:bg-app-surface transition cursor-pointer" title="Close Dual Canvas">✕</button>
+          <button onclick="closeDualModal()" id="btn-close-dual-x" class="text-app-muted hover:text-white px-2 py-1 rounded hover:bg-app-surface transition cursor-pointer flex items-center justify-center" title="Close Dual Canvas"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button>
         </div>
       </div>
 
@@ -1447,9 +1666,9 @@
               <span id="dual-left-val-pill" class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 text-[10px]">Value A</span>
             </div>
             <div class="flex items-center space-x-1.5">
-              <button onclick="changeDualPage('left', -1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">◀</button>
+              <button onclick="changeDualPage('left', -1)" class="px-2 py-1 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
               <span id="dual-left-page-ind" class="text-[10px] text-app-teal px-1.5">Page 1</span>
-              <button onclick="changeDualPage('left', 1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">▶</button>
+              <button onclick="changeDualPage('left', 1)" class="px-2 py-1 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
               <button onclick="zoomDual('left', -0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">-</button>
               <span id="dual-left-zoom" class="text-[9px] text-app-dim">100%</span>
               <button onclick="zoomDual('left', 0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">+</button>
@@ -1479,9 +1698,9 @@
               <span id="dual-right-val-pill" class="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 text-[10px]">Value B</span>
             </div>
             <div class="flex items-center space-x-1.5">
-              <button onclick="changeDualPage('right', -1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">◀</button>
+              <button onclick="changeDualPage('right', -1)" class="px-2 py-1 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
               <span id="dual-right-page-ind" class="text-[10px] text-app-teal px-1.5">Page 1</span>
-              <button onclick="changeDualPage('right', 1)" class="px-2 py-0.5 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer">▶</button>
+              <button onclick="changeDualPage('right', 1)" class="px-2 py-1 bg-app-surface hover:bg-app-border text-white text-[10px] rounded cursor-pointer flex items-center justify-center"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
               <button onclick="zoomDual('right', -0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">-</button>
               <span id="dual-right-zoom" class="text-[9px] text-app-dim">100%</span>
               <button onclick="zoomDual('right', 0.15)" class="px-1.5 py-0.5 bg-app-surface text-[10px] text-app-muted hover:text-white rounded cursor-pointer">+</button>
@@ -1507,7 +1726,7 @@
       <!-- Footer Bar -->
       <div class="px-5 py-2.5 bg-app-surface border-t border-app-border flex items-center justify-between text-xs font-mono">
         <div class="flex items-center space-x-3 text-app-dim text-[11px]">
-          <span>⚡ Synchronized Multi-Document Provenance</span>
+          <span class="flex items-center space-x-1.5"><svg class="w-3.5 h-3.5 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Synchronized Multi-Document Provenance</span></span>
           <span>•</span>
           <span class="text-app-teal">PyMuPDF 150 DPI Direct Vector Render</span>
         </div>
@@ -1520,12 +1739,10 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- 3C. FLOATING AI COPILOT PILL TRIGGER       -->
+  <!-- 3C. FLOATING AI FACT AUDITOR BUTTON        -->
   <!-- ========================================== -->
-  <button id="btn-floating-copilot" onclick="toggleCopilotDrawer()" class="fixed bottom-6 right-6 z-40 px-4 py-2.5 rounded-full bg-gradient-to-r from-app-teal via-teal-400 to-app-teal hover:from-teal-400 hover:to-app-teal text-slate-950 font-mono font-black text-xs shadow-[0_0_24px_rgba(0,212,178,0.5)] flex items-center space-x-2 transition transform hover:scale-105 cursor-pointer">
-    <span class="text-sm">✨</span>
-    <span>AI Fact Auditor</span>
-    <kbd class="text-[10px] px-1.5 py-0.5 rounded bg-slate-950/20 text-slate-950 font-bold border border-slate-950/20">⌘ J</kbd>
+  <button id="btn-floating-copilot" onclick="toggleCopilotDrawer()" title="AI Fact Auditor (Ctrl J)" class="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-accent hover:bg-accent-hover text-slate-950 shadow-[0_0_20px_rgba(217,119,6,0.5)] flex items-center justify-center transition transform hover:scale-110 active:scale-95 cursor-pointer border border-amber-400/40">
+    <svg class="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
   </button>
 
   <!-- ========================================== -->
@@ -1536,9 +1753,7 @@
     <!-- Copilot Header -->
     <div class="p-4 border-b border-app-border bg-[#080E1A] flex items-center justify-between">
       <div class="flex items-center space-x-2.5">
-        <div class="w-8 h-8 rounded-lg bg-app-teal/15 border border-app-teal/30 flex items-center justify-center text-app-teal text-sm">
-          ✨
-        </div>
+        <div class="w-8 h-8 rounded-lg bg-app-teal/15 border border-app-teal/30 flex items-center justify-center text-app-teal text-sm"><svg class="w-4 h-4 text-app-teal inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
         <div>
           <div class="flex items-center space-x-2">
             <h3 class="text-xs font-bold text-white font-mono">AI Fact Auditor Copilot</h3>
@@ -1547,22 +1762,22 @@
           <p class="text-[10px] font-mono text-app-dim">9 Filings • 744 Grounded Facts • Deterministic Provenance</p>
         </div>
       </div>
-      <button onclick="toggleCopilotDrawer()" id="btn-close-copilot" class="text-app-muted hover:text-white font-mono text-base p-1.5 rounded hover:bg-app-surface transition cursor-pointer">✕</button>
+      <button onclick="toggleCopilotDrawer()" id="btn-close-copilot" class="text-app-muted hover:text-white p-1.5 rounded hover:bg-app-surface transition cursor-pointer flex items-center justify-center"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button>
     </div>
 
     <!-- Suggested Quick Chips -->
     <div class="p-3 border-b border-app-border/70 bg-[#020408] overflow-x-auto custom-scroll flex space-x-2 flex-shrink-0">
       <button onclick="askCopilotPreset('Compare Delhivery Standalone vs Consolidated FY24 revenue')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
-        ⚡ Consol vs Standalone FY24
+        Consol vs Standalone FY24
       </button>
       <button onclick="askCopilotPreset('What are the conflicting India GDP forecasts for FY25?')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
-        🏛️ India FY25 GDP Spread
+        India FY25 GDP Spread
       </button>
       <button onclick="askCopilotPreset('What was Delhivery FY24 Express Parcel shipment volume?')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
-        📦 Parcel Volume 740M
+        Parcel Volume 740M
       </button>
       <button onclick="askCopilotPreset('Show Apple FY24 Net Sales product breakdown')" class="px-2.5 py-1 rounded-full text-[10px] font-mono bg-app-surface/80 hover:bg-app-teal/15 hover:text-app-teal border border-app-border whitespace-nowrap text-app-text transition cursor-pointer">
-        🍎 Apple FY24 Net Sales
+        Apple FY24 Net Sales
       </button>
     </div>
 
@@ -1570,9 +1785,7 @@
     <div id="copilot-messages" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4 font-mono text-xs">
       <!-- Intro message -->
       <div class="flex items-start space-x-3">
-        <div class="w-6 h-6 rounded-full bg-app-teal/20 border border-app-teal/40 text-app-teal flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
-          ✨
-        </div>
+        <div class="w-6 h-6 rounded-full bg-app-teal/20 border border-app-teal/40 text-app-teal flex items-center justify-center text-xs flex-shrink-0 mt-0.5"><svg class="w-3.5 h-3.5 text-app-teal inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg></div>
         <div class="p-3.5 rounded-xl bg-app-surface/80 border border-app-border text-app-text space-y-2 max-w-[90%]">
           <p class="leading-relaxed">
             Hello! I am your <b>Grounded Financial Fact Auditor</b>. Ask me to compare financial figures across filings, trace institutional GDP/inflation contradictions, or explain accounting scope adjustments.
@@ -1586,12 +1799,14 @@
     <div class="p-3.5 border-t border-app-border bg-[#080E1A]">
       <form id="copilot-form" onsubmit="submitCopilotChat(event)" class="flex items-center space-x-2">
         <input type="text" id="copilot-input" placeholder="Ask a financial or audit question..." class="flex-1 px-3.5 py-2.5 bg-app-surface border border-app-border rounded-xl text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-app-teal transition">
-        <button type="submit" id="btn-copilot-send" class="px-4 py-2.5 bg-app-teal hover:bg-teal-400 text-slate-950 font-bold font-mono text-xs rounded-xl transition cursor-pointer flex items-center space-x-1 shadow-md shadow-app-teal/20">
+        <button type="submit" id="btn-copilot-send" class="px-4 py-2.5 bg-accent hover:bg-accent-hover text-slate-950 font-bold font-mono text-xs rounded-xl transition cursor-pointer flex items-center space-x-1 shadow-md shadow-accent/20">
           <span>Send</span>
           <span>→</span>
         </button>
       </form>
     </div>
+
+  </div>
 
   </div>
 

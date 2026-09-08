@@ -11,6 +11,22 @@ from src.normalization.numbers import parse_number
 from src.normalization.temporal import parse_period
 from src.normalization.metrics import canonicalize_metric
 
+# Pre-compiled regular expressions for high-throughput extraction
+RE_CURRENCY_USD = re.compile(r'\busd\b|\bdollars?\b', re.IGNORECASE)
+RE_CURRENCY_INR = re.compile(r'\b(?:rs\.?|inr|rupees?)\b', re.IGNORECASE)
+RE_CURRENCY_EUR = re.compile(r'\beur\b|\beuros?\b', re.IGNORECASE)
+RE_DATE_MATCHES = re.compile(
+    r'(?:(?:three|twelve)\s+months\s+ended\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2},?\s+20\d{2}|\b20\d{2}\b',
+    re.IGNORECASE
+)
+RE_REV_CR = re.compile(r'(?:₹|rs\.?)\s*([\d\,]+(?:\.\d+)?)\s*(?:cr|crore)', re.IGNORECASE)
+RE_REV_MN = re.compile(r'(?:₹|rs\.?)\s*([\d\,]+(?:\.\d+)?)\s*(?:mn|million)', re.IGNORECASE)
+RE_REV_USD = re.compile(r'\$\s*([\d\,]+(?:\.\d+)?)\s*(billion|million|bn|mn)\b', re.IGNORECASE)
+RE_YEAR_MATCH = re.compile(r'\b(202[0-9])\b')
+RE_SHIPMENTS = re.compile(r'(\d+[\,\.]?\d*)\s*(?:mn|million)\b', re.IGNORECASE)
+RE_PIN_CODES = re.compile(r'(\d{2,3}[\,\.]?\d{3})\s*(?:pin\s*codes|active\s*pin\s*codes)', re.IGNORECASE)
+RE_PERCENT_VAL = re.compile(r'(\d+(?:\.\d+)?)\s*%')
+
 class FactExtractor:
     def __init__(self, default_entity_name: str = "Delhivery Limited"):
         self.default_entity_name = default_entity_name
@@ -62,11 +78,11 @@ class FactExtractor:
             elif "in lakhs" in t or "in lakh" in t:
                 multiplier = 1e5
             
-            if "$" in t or re.search(r'\busd\b|\bdollars?\b', t):
+            if "$" in t or RE_CURRENCY_USD.search(t):
                 currency = "USD"
-            elif "₹" in t or re.search(r'\b(?:rs\.?|inr|rupees?)\b', t):
+            elif "₹" in t or RE_CURRENCY_INR.search(t):
                 currency = "INR"
-            elif "€" in t or re.search(r'\beur\b|\beuros?\b', t):
+            elif "€" in t or RE_CURRENCY_EUR.search(t):
                 currency = "EUR"
         return multiplier, currency
 
@@ -127,7 +143,7 @@ class FactExtractor:
                     if num_cols and header_candidates:
                         date_matches = []
                         for hc in header_candidates:
-                            for dm in re.finditer(r'(?:(?:three|twelve)\s+months\s+ended\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2},?\s+20\d{2}|\b20\d{2}\b', hc, re.IGNORECASE):
+                            for dm in RE_DATE_MATCHES.finditer(hc):
                                 date_matches.append(dm.group(0))
 
                         for idx, c_idx in enumerate(num_cols):
@@ -142,7 +158,7 @@ class FactExtractor:
             if not period_cols:
                 continue
 
-            for row in all_rows:
+            for r_idx, row in enumerate(all_rows):
                 if not row or len(row) < 2:
                     continue
                 row_label = row[0].strip()
@@ -165,12 +181,19 @@ class FactExtractor:
 
                     header_label = tab.headers[col_idx] if col_idx < len(tab.headers) else f"Col_{col_idx}"
                     ev_id = f"ev_{parsed_doc.document_id}_p{tab.page_number}_tab_{len(facts)}"
+                    
+                    cell_bbox = tab.bbox
+                    if hasattr(tab, "cell_bboxes") and tab.cell_bboxes and r_idx < len(tab.cell_bboxes):
+                        row_cells = tab.cell_bboxes[r_idx]
+                        if col_idx < len(row_cells) and row_cells[col_idx]:
+                            cell_bbox = row_cells[col_idx]
+
                     evidence = Evidence(
                         evidence_id=ev_id,
                         document_id=parsed_doc.document_id,
                         document_name=parsed_doc.document_name,
                         page_number=tab.page_number,
-                        bbox=tab.bbox,
+                        bbox=cell_bbox,
                         text_snippet=f"Table Row: {row_label} | Column: {header_label} -> {cell_val}",
                         extraction_method="table_structure",
                         confidence=0.95
@@ -201,8 +224,7 @@ class FactExtractor:
             # Revenue statements (supports ₹ Cr, ₹ Mn, ₹ Million, Rs.)
             if "revenue" in text.lower() and any(u in text.lower() for u in ["cr", "crore", "mn", "million", "₹", "rs"]):
                 # Case A: Crores
-                rev_matches_cr = re.finditer(r'(?:₹|rs\.?)\s*([\d\,]+(?:\.\d+)?)\s*(?:cr|crore)', text, re.IGNORECASE)
-                for m in rev_matches_cr:
+                for m in RE_REV_CR.finditer(text):
                     val_str = m.group(1).replace(",", "")
                     norm_val, unit, _ = parse_number(f"₹ {val_str} Cr")
                     if norm_val and norm_val > 1e6:
@@ -232,8 +254,7 @@ class FactExtractor:
                         ))
                 
                 # Case B: Millions (e.g. ₹81,415Mn or ₹81,415 Million)
-                rev_matches_mn = re.finditer(r'(?:₹|rs\.?)\s*([\d\,]+(?:\.\d+)?)\s*(?:mn|million)', text, re.IGNORECASE)
-                for m in rev_matches_mn:
+                for m in RE_REV_MN.finditer(text):
                     val_str = m.group(1).replace(",", "")
                     try:
                         val_mn = float(val_str)
@@ -267,9 +288,50 @@ class FactExtractor:
                     except ValueError:
                         pass
 
+            # Case C: USD Billions / Millions (e.g. $574.8 billion, $514.0 billion)
+            if "$" in text or any(k in text.lower() for k in ["net sales", "operating income", "total sales"]):
+                for m in RE_REV_USD.finditer(text):
+                    val_str = m.group(1).replace(",", "")
+                    scale_word = m.group(2).lower()
+                    mult = 1e9 if "b" in scale_word else 1e6
+                    try:
+                        val_num = float(val_str)
+                        norm_val = val_num * mult
+                        window = text[max(0, m.start()-50):min(len(text), m.end()+50)]
+                        year_match = RE_YEAR_MATCH.search(window)
+                        period_str = f"FY{year_match.group(1)[2:]}" if year_match else ("FY24" if "2024" in text else "FY23")
+                        period = parse_period(period_str)
+                        
+                        metric_id = "operating_income" if "operating income" in text.lower() else "revenue"
+                        
+                        ev = Evidence(
+                            evidence_id=f"ev_{parsed_doc.document_id}_p{block.page_number}_txt_{len(facts)}",
+                            document_id=parsed_doc.document_id,
+                            document_name=parsed_doc.document_name,
+                            page_number=block.page_number,
+                            bbox=block.bbox,
+                            text_snippet=text[:250],
+                            extraction_method="narrative_text",
+                            confidence=0.95
+                        )
+                        facts.append(Fact(
+                            fact_id=f"fact_{parsed_doc.document_id}_{block.page_number}_{len(facts)}",
+                            entity_id=entity.entity_id,
+                            metric_id=metric_id,
+                            period_id=period.period_id,
+                            raw_value=f"${val_str} {m.group(2).capitalize()}",
+                            normalized_value=norm_val,
+                            unit="USD",
+                            scope="Consolidated",
+                            confidence=0.95,
+                            evidence=[ev]
+                        ))
+                    except ValueError:
+                        pass
+
             # Shipments volume (supports Mn, Million, packages)
             if any(k in text.lower() for k in ["parcel", "shipment", "express", "package"]) and any(u in text.lower() for u in ["mn", "million", "cr"]):
-                m = re.search(r'(\d+[\,\.]?\d*)\s*(?:mn|million)\b', text, re.IGNORECASE)
+                m = RE_SHIPMENTS.search(text)
                 if m:
                     val_str = m.group(1).replace(",", "")
                     try:
@@ -305,7 +367,7 @@ class FactExtractor:
 
             # PIN codes
             if "pin" in text.lower() and "code" in text.lower():
-                m = re.search(r'(\d{2,3}[\,\.]?\d{3})\s*(?:pin\s*codes|active\s*pin\s*codes)', text, re.IGNORECASE)
+                m = RE_PIN_CODES.search(text)
                 if m:
                     num_str = m.group(1).replace(",", "").replace(".", "")
                     try:
@@ -340,7 +402,7 @@ class FactExtractor:
 
             # Macro Inflation & GDP Statements
             if "inflation" in text.lower() and ("%" in text or "percent" in text.lower()):
-                m = re.search(r'(\d+(?:\.\d+)?)\s*%', text)
+                m = RE_PERCENT_VAL.search(text)
                 if m:
                     val = float(m.group(1))
                     if 2.0 <= val <= 12.0:
@@ -370,7 +432,7 @@ class FactExtractor:
                         ))
 
             if "gdp" in text.lower() and ("growth" in text.lower() or "percent" in text.lower() or "%" in text):
-                m = re.search(r'(\d+(?:\.\d+)?)\s*%', text)
+                m = RE_PERCENT_VAL.search(text)
                 if m:
                     val = float(m.group(1))
                     if 4.0 <= val <= 10.0:

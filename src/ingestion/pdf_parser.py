@@ -17,6 +17,7 @@ class ParsedTable(BaseModel):
     headers: List[str]
     rows: List[List[str]]
     title: Optional[str] = None
+    cell_bboxes: Optional[List[List[Optional[List[float]]]]] = None
 
 class ParsedDocument(BaseModel):
     document_id: str
@@ -75,11 +76,25 @@ class PDFIngestor:
                         headers = [str(c or '').strip() for c in df[0]]
                         rows = [[str(c or '').strip() for c in r] for r in df[1:]]
                         tab_bbox = [round(c, 2) for c in tab.bbox]
+                        
+                        # Extract exact individual cell coordinates
+                        cell_bboxes = []
+                        if hasattr(tab, "rows") and len(tab.rows) > 1:
+                            for r_obj in tab.rows[1:]:
+                                row_cells = []
+                                for c in getattr(r_obj, "cells", []):
+                                    if c:
+                                        row_cells.append([round(float(v), 2) for v in c])
+                                    else:
+                                        row_cells.append(None)
+                                cell_bboxes.append(row_cells)
+
                         tables.append(ParsedTable(
                             page_number=page_num,
                             bbox=tab_bbox,
                             headers=headers,
-                            rows=rows
+                            rows=rows,
+                            cell_bboxes=cell_bboxes if cell_bboxes else None
                         ))
             except Exception:
                 pass

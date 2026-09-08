@@ -66,7 +66,7 @@ class VisualCriticAgent(BaseAgent):
             step_type="critic_review",
             agent_role=self.role,
             thought=f"Critic Verification Complete: {verified_count}/{total} citations strictly grounded. Provenance Integrity Score: {score}%.",
-            content=f"🛡️ **Critic Sign-Off**: {verified_count} grounded evidence points verified with exact pixel bounding boxes. Zero ungrounded assertions detected.",
+            content=f" **Critic Sign-Off**: {verified_count} grounded evidence points verified with exact pixel bounding boxes. Zero ungrounded assertions detected.",
             citations=mission.citations
         )
         mission.steps.append(critic_step)

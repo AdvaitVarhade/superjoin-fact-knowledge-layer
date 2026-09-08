@@ -1,4 +1,4 @@
-﻿from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -25,3 +25,7 @@ class Relationship(BaseModel):
     confidence: float = 1.0
     reasoning: str
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def delta_percentage(self) -> Optional[float]:
+        return self.delta_percent

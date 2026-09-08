@@ -25,7 +25,7 @@ class AgentOrchestrator:
         
         # Instantiate Swarm Personas
         self.lead_agent = BaseAgent(
-            role="🎯 Lead Audit Orchestrator",
+            role="Lead Audit Orchestrator",
             description="Decomposes high-level audit objectives, coordinates specialist subagents, and synthesizes final audit memorandums.",
             tool_registry=self.tools
         )
@@ -292,7 +292,7 @@ class AgentOrchestrator:
             for c in mission.citations[:6]
         ]) or "*Zero primary citations recorded.*"
 
-        memo = f"""# 🏛️ Certified Audit Memorandum
+        memo = f"""# Certified Audit Memorandum
 **Mission Objective:** {mission.objective}  
 **Audit Health Score:** `{mission.audit_score or 100.0}% (Zero-Hallucination Verified)`  
 **Execution Timestamp:** `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%SZ')}`  

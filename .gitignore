@@ -48,6 +48,12 @@ scratch/
 uploads/
 starter-datasets.zip
 
+# Logs & Databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
 # Graft internal caches (keep markdown nodes & INDEX.md)
 graft/.cache/
 graft/.graph/
