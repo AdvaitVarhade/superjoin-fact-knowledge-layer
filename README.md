@@ -5,13 +5,15 @@ An evidence-first **Fact Knowledge Layer** that ingests PDF documents, extracts 
 2. **Genuine Contradictions** (unreconciled conflicting estimates/figures across publishers)
 3. **Context-Reconciled Contradictions** (discrepancies explained by scope, temporal restatement, or units)
 4. **Handled Extraction/Reasoning Edge Cases** (accounting bracket losses, multi-year fiscal ranges)
-5. **Comprehensive IEEE 830 SRS Specification** ([SRS.md](file:///c:/d_drive/projects/Super%20Join/SRS.md)) featuring 9 Mermaid UML architecture diagrams.
+5. **Autonomous Multi-Agent Audit Swarm** (ReAct loop, specialized subagent delegation, forensic arithmetic, and zero-hallucination critic sign-off)
+6. **Comprehensive IEEE 830 SRS Specification** ([SRS.md](file:///c:/d_drive/projects/Super%20Join/SRS.md)) featuring 9 Mermaid UML architecture diagrams.
 
 ---
 
 ## 📑 Specifications & Architecture Documentation
 - 📘 **[Software Requirements Specification (IEEE Std 830-1998 / ISO 29148)](file:///c:/d_drive/projects/Super%20Join/SRS.md)**: Full 7-section SRS including 9 Mermaid UML diagrams (Component, Use Case, Class, 3 Sequence diagrams, Activity Decision Tree, State Machine, and Deployment Topology).
 - 🔬 **[Deep Research & Technical Report](file:///c:/d_drive/projects/Super%20Join/deep-research-report.md)**: Deep dive into PDF grounding heuristics, normalization mathematics, and graph algorithms.
+- 🤖 **[Multi-Agent Audit Architecture](file:///c:/d_drive/projects/Super%20Join/src/agents/)**: Autonomous swarm (Lead Orchestrator, Scope Specialist, Forensic Math, Visual Critic).
 
 ---
 
@@ -136,16 +138,18 @@ PDF Ingestion (PyMuPDF) ➔ Layout & BBox Parsing ➔ Normalization (Numbers, Fi
 ```
 Super Join/
 ├── src/
-│   ├── api/              # FastAPI endpoints (upload, facts, query, cases, graph, canvas)
+│   ├── agents/           # Multi-Agent Swarm (Orchestrator, Scope, Arithmetic, Critic personas)
+│   ├── api/              # FastAPI endpoints (upload, facts, query, agent stream, graph, canvas)
 │   ├── extraction/       # Grounded Fact Extractor & table parsing
 │   ├── ingestion/        # PyMuPDF fast layout, text block, and table extractor
 │   ├── models/           # Pydantic data schemas (Fact, Evidence, Relationship, CaseStudy)
 │   ├── normalization/    # Indian/international scale, temporal, and metric canonicalizers
 │   ├── reconciliation/   # Cross-Document Relationship & Case Studies Engine
 │   ├── storage/          # Multi-company Fact Knowledge Store & hybrid search
-│   └── ui/               # Obsidian-themed UI with Canvas Studio & D3 Knowledge Graph
+│   └── ui/               # Obsidian-themed UI with Canvas Studio, D3 Graph & Agent Cockpit
 ├── tests/
 │   ├── evals/            # Automated verification for the 4 required cases
+│   ├── test_agents.py    # Multi-agent tool registry, ReAct loop & critic tests
 │   ├── test_api.py       # Comprehensive FastAPI endpoint test suite
 │   ├── test_external_reports.py # Multi-company SEC & international report tests
 │   └── test_normalization.py   # Currency, scale, and period normalization tests

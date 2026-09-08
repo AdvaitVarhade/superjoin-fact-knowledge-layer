@@ -9,7 +9,7 @@ from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
 import fitz  # PyMuPDF
 
@@ -17,8 +17,10 @@ from src.storage.store import FactKnowledgeStore
 from src.models.fact import Fact
 from src.models.relationship import Relationship
 from src.models.case_study import CaseStudy
+from src.agents import AgentOrchestrator
 
 store = FactKnowledgeStore()
+agent_orchestrator = AgentOrchestrator(store)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -1063,5 +1065,84 @@ def export_audit_package_json():
             "Cache-Control": "no-cache"
         }
     )
+
+
+# ---------------------------------------------------------
+# Multi-Agent Financial Audit Subsystem Endpoints
+# ---------------------------------------------------------
+
+class AgentMissionRequest(BaseModel):
+    objective: str
+    entity_target: Optional[str] = None
+
+
+@app.get("/api/agent/tools")
+def get_agent_tools():
+    """Returns the JSON schema registry of all deterministic tools available to the audit swarm."""
+    return {
+        "total_tools": len(agent_orchestrator.tools.tools),
+        "tools": agent_orchestrator.tools.get_tool_schemas()
+    }
+
+
+@app.post("/api/agent/run")
+def run_agent_mission(req: AgentMissionRequest):
+    """Executes a synchronous multi-agent audit mission and returns the complete thought trace and memorandum."""
+    if not req.objective or not req.objective.strip():
+        raise HTTPException(status_code=400, detail="Mission objective cannot be empty.")
+    
+    mission = agent_orchestrator.run_mission(
+        objective=req.objective.strip(),
+        entity_target=req.entity_target
+    )
+    return mission.model_dump()
+
+
+@app.get("/api/agent/stream")
+@app.post("/api/agent/stream")
+def stream_agent_mission(
+    objective: Optional[str] = Query(None, description="Audit mission objective"),
+    req: Optional[AgentMissionRequest] = None
+):
+    """Streams real-time agent thoughts, subagent tool calls, and critic reviews via Server-Sent Events (SSE)."""
+    target_obj = objective or (req.objective if req else None)
+    if not target_obj or not target_obj.strip():
+        raise HTTPException(status_code=400, detail="Mission objective is required.")
+
+    def event_generator():
+        for event_data in agent_orchestrator.stream_mission(objective=target_obj.strip()):
+            yield f"data: {json.dumps(event_data)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@app.post("/api/agent/triage-document")
+def triage_uploaded_document(doc_id: str = Query(..., description="Uploaded document identifier")):
+    """Autonomous watchdog triage for newly uploaded corporate filings."""
+    if doc_id not in store.documents:
+        raise HTTPException(status_code=404, detail=f"Document '{doc_id}' not found in registry.")
+    
+    doc = store.documents[doc_id]
+    mission_obj = f"Perform complete autonomous triage and conflict analysis for newly indexed filing: '{doc.document_name}' ({doc.document_id})"
+    
+    mission = agent_orchestrator.run_mission(objective=mission_obj)
+    return {
+        "document_id": doc_id,
+        "document_name": doc.document_name,
+        "mission_id": mission.mission_id,
+        "status": mission.status,
+        "audit_score": mission.audit_score,
+        "triage_summary": mission.final_memo,
+        "citations_count": len(mission.citations)
+    }
+
 
 

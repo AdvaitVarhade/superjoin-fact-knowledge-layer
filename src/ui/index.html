@@ -164,6 +164,12 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
           <span>Upload PDF</span>
         </button>
+
+        <button onclick="switchTab('agent')" id="nav-btn-agent" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium text-app-muted hover:text-white hover:bg-app-surface/60 border border-transparent transition cursor-pointer">
+          <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <span class="flex-1 text-left">Agent Cockpit</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-mono bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">AI Swarm</span>
+        </button>
       </div>
 
       <!-- WORKSPACES Section -->
@@ -1131,6 +1137,151 @@
             <div class="pt-3 border-t border-app-border text-[10px] font-mono text-app-dim flex justify-between items-center">
               <span>Deterministic Graph Layer</span>
               <span class="text-app-teal font-semibold">D3.js Force v7</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- VIEW: AUTONOMOUS AGENT COCKPIT (AI SWARM)  -->
+      <!-- ========================================== -->
+      <div id="view-agent" class="hidden space-y-6">
+        
+        <!-- Header & Multi-Agent Swarm Status Cards -->
+        <div class="app-card rounded-xl p-5 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-app-border pb-4">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3 h-3 rounded-full bg-purple-500 animate-pulse"></span>
+                <h2 class="text-sm font-bold text-white font-mono uppercase tracking-wider">Autonomous Financial Audit Agent Swarm</h2>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-800 font-bold">MULTI-AGENT REACT</span>
+              </div>
+              <p class="text-xs text-app-muted mt-1">Autonomous task decomposition, arithmetic bridge calculation, perimeter verification, and zero-hallucination critic sign-off.</p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <span id="agent-swarm-status-pill" class="px-2.5 py-1 rounded text-xs font-mono bg-emerald-950/80 text-emerald-400 border border-emerald-800 font-bold flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>SWARM STANDBY</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 4 Specialist Agent Persona Badges -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+            <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white flex items-center space-x-1"><span>🎯</span> <span>Orchestrator</span></span>
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              </div>
+              <p class="text-[10px] text-app-dim">Goal planning & subagent task dispatch.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-app-teal flex items-center space-x-1"><span>📜</span> <span>Scope Auditor</span></span>
+                <span class="w-2 h-2 rounded-full bg-app-teal"></span>
+              </div>
+              <p class="text-[10px] text-app-dim">Ind AS 110 Standalone vs Consol perimeter.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-app-surface/60 border border-app-border space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-amber-400 flex items-center space-x-1"><span>🔢</span> <span>Forensic Math</span></span>
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              </div>
+              <p class="text-[10px] text-app-dim">EBITDA bridge, margins, & ratio sanity.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-app-surface/60 border border-purple-900/40 bg-purple-950/20 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-purple-300 flex items-center space-x-1"><span>🛡️</span> <span>Visual Critic</span></span>
+                <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+              </div>
+              <p class="text-[10px] text-purple-300/80">Zero-hallucination BBox verification.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mission Control Input Bar & Preset Missions -->
+        <div class="app-card rounded-xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-mono font-bold text-white uppercase tracking-wider">Mission Objective</label>
+            <span class="text-[10px] font-mono text-app-dim">Autonomous Execution Loop</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" id="agent-mission-input" placeholder="e.g. Audit Delhivery FY24 EBITDA to Net Loss bridge and reconcile adjustments..." class="flex-1 px-4 py-2.5 bg-app-surface border border-app-border rounded-lg text-xs font-mono text-white placeholder-app-dim focus:outline-none focus:border-purple-500 transition">
+            <button onclick="dispatchAgentMission()" id="btn-dispatch-mission" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-mono font-bold text-xs rounded-lg transition flex items-center justify-center space-x-2 cursor-pointer shadow-lg shadow-purple-600/30">
+              <span>🚀 Dispatch Swarm</span>
+            </button>
+          </div>
+
+          <!-- Preset Mission Chips -->
+          <div class="pt-2 flex flex-wrap items-center gap-1.5 text-xs font-mono">
+            <span class="text-app-dim text-[11px] mr-1">Preset Missions:</span>
+            <button onclick="setAgentPreset('Audit Delhivery FY24 EBITDA to Net Loss bridge and reconcile non-cash adjustments')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
+              ⚡ EBITDA Bridge (FY24)
+            </button>
+            <button onclick="setAgentPreset('Reconcile Delhivery Standalone vs Consolidated FY24 revenue scope variance per Note 34')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
+              📜 Scope Reconciliation (Note 34)
+            </button>
+            <button onclick="setAgentPreset('Audit macroeconomic CPI inflation spread between Economic Survey and IMF Article IV report')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
+              🏛️ Macro CPI Inflation Spread
+            </button>
+            <button onclick="setAgentPreset('Corroborate Delhivery FY24 Express Parcel Volume across Annual Report and Investor Presentation')" class="px-2.5 py-1 rounded text-[11px] font-mono bg-app-surface hover:bg-app-border text-app-text border border-app-border cursor-pointer transition">
+              📦 Express Parcel Volume Check
+            </button>
+          </div>
+        </div>
+
+        <!-- 2-Column Live Workspace: Trace on Left, Memorandum on Right -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Left Column: Live Step-by-Step Reasoning Trace (7 cols) -->
+          <div class="lg:col-span-7 app-card rounded-xl p-5 space-y-4 flex flex-col h-[650px] shadow-2xl">
+            <div class="flex items-center justify-between border-b border-app-border pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+                <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Live Agent Reasoning & Tool Trace</h3>
+              </div>
+              <div class="flex items-center space-x-2 text-[10px] font-mono text-app-dim">
+                <span id="agent-step-counter">0 Steps</span>
+                <span class="w-px h-3 bg-app-border"></span>
+                <button onclick="clearAgentTrace()" class="hover:text-white cursor-pointer">Clear</button>
+              </div>
+            </div>
+
+            <!-- Trace Stream Scrollable Area -->
+            <div id="agent-trace-stream" class="flex-1 overflow-y-auto custom-scroll space-y-2.5 pr-1 font-mono text-xs">
+              <div class="p-8 text-center text-app-dim space-y-2">
+                <div class="text-3xl">🤖</div>
+                <div class="text-white font-bold">Multi-Agent Swarm Ready</div>
+                <p class="text-[11px] max-w-md mx-auto">Select a preset mission above or enter a custom audit goal to watch the Lead Orchestrator, Scope Auditor, Forensic Math, and Critic agents collaborate live.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Certified Audit Memorandum & Evidence (5 cols) -->
+          <div class="lg:col-span-5 app-card rounded-xl p-5 space-y-4 flex flex-col h-[650px] overflow-y-auto custom-scroll shadow-2xl">
+            <div class="flex items-center justify-between border-b border-app-border pb-3">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h3 class="text-xs font-bold text-white font-mono uppercase tracking-wider">Certified Audit Memorandum</h3>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button onclick="copyAgentMemo()" id="btn-copy-memo" class="hidden px-2 py-0.5 text-[10px] font-mono rounded bg-app-surface border border-purple-500/40 text-purple-300 hover:bg-purple-500/10 transition cursor-pointer">
+                  📋 Copy
+                </button>
+                <span id="agent-memo-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-app-surface text-app-dim border border-app-border">AWAITING</span>
+              </div>
+            </div>
+
+            <!-- Rendered Memo Area -->
+            <div id="agent-memo-container" class="space-y-4 font-mono text-xs">
+              <div class="p-8 text-center text-app-dim space-y-2">
+                <div class="text-3xl">📜</div>
+                <div class="text-white font-bold">No Active Audit Memorandum</div>
+                <p class="text-[11px]">The synthesized audit memo, critic verification sign-off, and clickable evidence citations will render here upon mission completion.</p>
+              </div>
             </div>
           </div>
 

@@ -125,5 +125,22 @@ def test_api_export_audit_package_json():
     assert data["export_metadata"]["total_facts"] > 0
     assert data["export_metadata"]["total_documents"] > 0
 
+def test_api_agent_tools():
+    res = client.get("/api/agent/tools")
+    assert res.status_code == 200
+    data = res.json()
+    assert data["total_tools"] >= 8
+    assert len(data["tools"]) >= 8
+
+def test_api_agent_run_mission():
+    res = client.post("/api/agent/run", json={"objective": "Audit Delhivery FY24 EBITDA to Net Loss bridge"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "completed"
+    assert len(data["steps"]) >= 4
+    assert data["final_memo"] is not None
+    assert "Certified Audit Memorandum" in data["final_memo"]
+
+
 
 
