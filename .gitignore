@@ -42,6 +42,8 @@ Thumbs.db
 .cursor/
 .gemini/
 .windsurf/
+.mcp.json
+opencode.json
 
 # Project temporary scratch & uploaded storage
 scratch/
