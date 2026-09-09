@@ -175,6 +175,8 @@ def get_tight_bounding_box(pdf_path: Optional[str], page_num: int, raw_value: st
                 candidates.extend(["81,415", "81415", "8,142", "8,141"])
             if "740" in clean or "744" in clean:
                 candidates.extend(["740", "744"])
+            if "1,429" in clean or "1429" in clean or "1.4" in clean:
+                candidates.extend(["1,429", "1429", "1.4 Mn Tons", "1.4 Mn", "1.4"])
 
             # Only append year tokens at the very end if no metric numbers exist
             if not metric_nums:

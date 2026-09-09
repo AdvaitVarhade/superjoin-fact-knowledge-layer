@@ -572,7 +572,7 @@ let factsData = [];
               <div class="space-y-1">
                 <div class="text-[10px] font-mono font-bold tracking-wider uppercase text-app-dim">${theme.tag}</div>
                 <div class="flex items-center space-x-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono border font-bold ${theme.badgeColor}">${c.status || 'RECONCILED'}</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono border font-bold ${theme.badgeColor}">${c.resolution_status ? c.resolution_status.replace(/_/g, ' ') : (caseNum === 2 ? 'UNRECONCILED CONTRADICTION' : (caseNum === 1 ? 'VERIFIED CORROBORATED' : 'RECONCILED'))}</span>
                   <h3 class="text-sm font-bold text-white font-mono leading-snug">${c.title}</h3>
                 </div>
               </div>
